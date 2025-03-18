@@ -1,0 +1,582 @@
+{% extends "base.html" %}
+
+{% block title %}University Matcher - Find Your Ideal University{% endblock %}
+
+{% block hero %}
+<section class="hero is-primary is-medium">
+  <div class="hero-body">
+    <div class="container">
+      <div class="columns is-vcentered">
+        <div class="column is-6" data-aos="fade-right">
+          <h1 class="title is-1 mb-5">
+            Find Your Perfect University Match
+          </h1>
+          <h2 class="subtitle is-4 mb-5">
+            Our AI-powered recommendation engine matches your academic profile with the right universities.
+          </h2>
+          <div class="buttons are-large">
+            <a href="{{ url_for('profile') }}" class="button is-primary is-rounded">
+              <span class="icon">
+                <i class="fas fa-graduation-cap"></i>
+              </span>
+              <span>Get Started</span>
+            </a>
+            <a href="#how-it-works" class="button is-light is-rounded">
+              <span class="icon">
+                <i class="fas fa-info-circle"></i>
+              </span>
+              <span>Learn More</span>
+            </a>
+          </div>
+        </div>
+        <div class="column is-6" data-aos="fade-left">
+          <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1000&q=80" alt="University campus" class="home-hero-image">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<!-- Stats Counter Section -->
+<div class="container">
+  <div class="box shadow-lg" data-aos="fade-up">
+    <div class="columns has-text-centered is-multiline">
+      <div class="column">
+        <div class="statistic">
+          <div class="statistic-value counter" data-target="50">0</div>
+          <div class="statistic-label">Universities</div>
+        </div>
+      </div>
+      <div class="column">
+        <div class="statistic">
+          <div class="statistic-value counter" data-target="98">0</div>
+          <div class="statistic-label">Match Accuracy %</div>
+        </div>
+      </div>
+      <div class="column">
+        <div class="statistic">
+          <div class="statistic-value counter" data-target="1000">0</div>
+          <div class="statistic-label">Users Matched</div>
+        </div>
+      </div>
+      <div class="column">
+        <div class="statistic">
+          <div class="statistic-value counter" data-target="12">0</div>
+          <div class="statistic-label">Countries</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- How It Works Section -->
+<div class="container mt-6" id="how-it-works">
+  <h2 class="title is-2 has-text-centered mb-6" data-aos="fade-up">How It Works</h2>
+  
+  <div class="timeline">
+    <div class="timeline-item" data-aos="fade-up" data-aos-delay="100">
+      <div class="timeline-marker is-icon">
+        <i class="fas fa-user-circle"></i>
+      </div>
+      <div class="timeline-content">
+        <h3 class="title is-4">Create Your Profile</h3>
+        <p>Enter your academic information, test scores, and preferences to create your personalized academic profile.</p>
+      </div>
+    </div>
+    
+    <div class="timeline-item" data-aos="fade-up" data-aos-delay="200">
+      <div class="timeline-marker is-icon">
+        <i class="fas fa-cogs"></i>
+      </div>
+      <div class="timeline-content">
+        <h3 class="title is-4">AI-Powered Matching</h3>
+        <p>Our sophisticated algorithm analyzes your profile against our comprehensive university database to find your ideal matches.</p>
+      </div>
+    </div>
+    
+    <div class="timeline-item" data-aos="fade-up" data-aos-delay="300">
+      <div class="timeline-marker is-icon">
+        <i class="fas fa-list-ol"></i>
+      </div>
+      <div class="timeline-content">
+        <h3 class="title is-4">Review Recommendations</h3>
+        <p>Get a personalized list of universities that match your academic profile, preferences, and career goals.</p>
+      </div>
+    </div>
+    
+    <div class="timeline-item" data-aos="fade-up" data-aos-delay="400">
+      <div class="timeline-marker is-icon">
+        <i class="fas fa-balance-scale"></i>
+      </div>
+      <div class="timeline-content">
+        <h3 class="title is-4">Compare Universities</h3>
+        <p>Use our advanced comparison tools to evaluate multiple universities side by side with detailed metrics.</p>
+      </div>
+    </div>
+    
+    <div class="timeline-item" data-aos="fade-up" data-aos-delay="500">
+      <div class="timeline-marker is-icon">
+        <i class="fas fa-star"></i>
+      </div>
+      <div class="timeline-content">
+        <h3 class="title is-4">Save Your Favorites</h3>
+        <p>Create an account to save your favorite universities, track your applications, and receive updates.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features Section -->
+<div class="container mt-6 mb-6">
+  <h2 class="title is-2 has-text-centered mb-6" data-aos="fade-up">Key Features</h2>
+  
+  <div class="columns is-multiline">
+    <div class="column is-4" data-aos="fade-up">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-robot"></i>
+        </div>
+        <h3 class="title is-4">AI-Powered Matching</h3>
+        <p>Our advanced algorithm uses machine learning to provide highly accurate university matches based on your profile.</p>
+      </div>
+    </div>
+    
+    <div class="column is-4" data-aos="fade-up" data-aos-delay="100">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-globe-americas"></i>
+        </div>
+        <h3 class="title is-4">Global Database</h3>
+        <p>Search through universities across multiple countries with comprehensive information about each institution.</p>
+      </div>
+    </div>
+    
+    <div class="column is-4" data-aos="fade-up" data-aos-delay="200">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-chart-bar"></i>
+        </div>
+        <h3 class="title is-4">Advanced Analytics</h3>
+        <p>Detailed admission statistics and visualization tools to help you understand your chances of admission.</p>
+      </div>
+    </div>
+    
+    <div class="column is-4" data-aos="fade-up" data-aos-delay="300">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-filter"></i>
+        </div>
+        <h3 class="title is-4">Customizable Filters</h3>
+        <p>Refine your university search with filters for location, tuition, acceptance rate, and more.</p>
+      </div>
+    </div>
+    
+    <div class="column is-4" data-aos="fade-up" data-aos-delay="400">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-sync-alt"></i>
+        </div>
+        <h3 class="title is-4">Real-Time Updates</h3>
+        <p>Our database is regularly updated with the latest information about university programs and admission criteria.</p>
+      </div>
+    </div>
+    
+    <div class="column is-4" data-aos="fade-up" data-aos-delay="500">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <i class="fas fa-mobile-alt"></i>
+        </div>
+        <h3 class="title is-4">Mobile Responsive</h3>
+        <p>Access University Matcher from any device with our fully responsive design for desktop and mobile.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Testimonials -->
+<div class="container mt-6">
+  <h2 class="title is-2 has-text-centered mb-6" data-aos="fade-up">What Our Users Say</h2>
+  
+  <div class="testimonial-slider" data-aos="fade-up">
+    <div class="testimonial-slide">
+      <div class="testimonial-card">
+        <div class="testimonial-content">
+          <p>"University Matcher helped me find schools I wouldn't have considered otherwise. Now I'm attending my dream university thanks to their recommendations!"</p>
+        </div>
+        <div class="testimonial-author">
+          <img src="https://randomuser.me/api/portraits/women/43.jpg" alt="Sarah J." class="testimonial-avatar">
+          <div class="testimonial-info">
+            <h4>Sarah Johnson</h4>
+            <p>Computer Science Student</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="testimonial-slide">
+      <div class="testimonial-card">
+        <div class="testimonial-content">
+          <p>"The comparison tools made it so easy to evaluate different universities. The detailed analytics gave me confidence in my application decisions."</p>
+        </div>
+        <div class="testimonial-author">
+          <img src="https://randomuser.me/api/portraits/men/32.jpg" alt="Michael T." class="testimonial-avatar">
+          <div class="testimonial-info">
+            <h4>Michael Thompson</h4>
+            <p>Engineering Student</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="testimonial-slide">
+      <div class="testimonial-card">
+        <div class="testimonial-content">
+          <p>"As a parent, I found University Matcher incredibly helpful in guiding my daughter through the college selection process. The interface is intuitive and the recommendations were spot-on."</p>
+        </div>
+        <div class="testimonial-author">
+          <img src="https://randomuser.me/api/portraits/women/68.jpg" alt="Lisa M." class="testimonial-avatar">
+          <div class="testimonial-info">
+            <h4>Lisa Martinez</h4>
+            <p>Parent</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="has-text-centered mt-5" data-aos="fade-up">
+    <button id="prev-testimonial" class="button is-rounded">
+      <span class="icon">
+        <i class="fas fa-arrow-left"></i>
+      </span>
+    </button>
+    <button id="next-testimonial" class="button is-rounded ml-2">
+      <span class="icon">
+        <i class="fas fa-arrow-right"></i>
+      </span>
+    </button>
+  </div>
+</div>
+
+<!-- CTA Section -->
+<div class="container mt-6">
+  <div class="box cta-box" data-aos="zoom-in">
+    <div class="columns is-vcentered">
+      <div class="column">
+        <h3 class="title is-3">Ready to Find Your Perfect University Match?</h3>
+        <p class="subtitle">Create your profile today and get personalized recommendations.</p>
+      </div>
+      <div class="column is-narrow">
+        <a href="{{ url_for('profile') }}" class="button is-primary is-large is-rounded">
+          <span class="icon">
+            <i class="fas fa-rocket"></i>
+          </span>
+          <span>Get Started Now</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .home-hero-image {
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+    max-height: 500px;
+    object-fit: cover;
+    width: 100%;
+    transform: perspective(1000px) rotateY(-10deg);
+    transition: transform 0.5s ease;
+  }
+  
+  .home-hero-image:hover {
+    transform: perspective(1000px) rotateY(0deg);
+  }
+
+  .shadow-lg {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  }
+
+  .statistic {
+    padding: 1.5rem 0;
+  }
+
+  .statistic-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    font-family: 'Montserrat', sans-serif;
+  }
+
+  .statistic-label {
+    font-size: 1rem;
+    color: var(--gray-700);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 500;
+  }
+  
+  /* Timeline Styles */
+  .timeline {
+    position: relative;
+    max-width: 750px;
+    margin: 0 auto;
+  }
+  
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 20px;
+    width: 4px;
+    background: linear-gradient(180deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    border-radius: 4px;
+  }
+  
+  .timeline-item {
+    position: relative;
+    margin-left: 45px;
+    padding-bottom: 2.5rem;
+  }
+  
+  .timeline-marker {
+    position: absolute;
+    left: -45px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: white;
+    border: 4px solid var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .timeline-marker.is-icon i {
+    color: var(--primary-color);
+    font-size: 1.2rem;
+  }
+  
+  .timeline-content {
+    padding: 1.5rem;
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    transition: transform 0.3s ease;
+  }
+  
+  .timeline-item:hover .timeline-content {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Feature cards */
+  .feature-card {
+    background-color: white;
+    padding: 2rem;
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    height: 100%;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .feature-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+  }
+  
+  .feature-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  
+  /* Testimonials */
+  .testimonial-slider {
+    position: relative;
+    overflow: hidden;
+    height: 300px;
+  }
+  
+  .testimonial-slide {
+    position: absolute;
+    width: 100%;
+    opacity: 0;
+    transform: translateX(50px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  
+  .testimonial-slide.active {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  
+  .testimonial-card {
+    background-color: white;
+    border-radius: var(--border-radius);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    padding: 2rem;
+    position: relative;
+  }
+  
+  .testimonial-content {
+    font-style: italic;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    color: var(--gray-700);
+  }
+  
+  .testimonial-author {
+    display: flex;
+    align-items: center;
+  }
+  
+  .testimonial-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 1rem;
+    border: 2px solid var(--primary-light);
+  }
+  
+  .testimonial-info h4 {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  .testimonial-info p {
+    color: var(--gray-600);
+    font-size: 0.9rem;
+  }
+  
+  /* CTA Box */
+  .cta-box {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+    border-radius: var(--border-radius);
+    padding: 3rem 2rem;
+    color: white;
+  }
+  
+  .cta-box .title, 
+  .cta-box .subtitle {
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .cta-box .button {
+    background-color: white;
+    color: var(--primary-dark);
+    border: none;
+    font-weight: 600;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  
+  .cta-box .button:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Counter animation
+  const counters = document.querySelectorAll('.counter');
+  const speed = 200;
+  
+  const animateCounter = (counter) => {
+    const target = +counter.dataset.target;
+    let count = 0;
+    const increment = target / speed;
+    
+    const updateCount = () => {
+      if (count < target) {
+        count += increment;
+        counter.innerText = Math.ceil(count);
+        setTimeout(updateCount, 1);
+      } else {
+        counter.innerText = target;
+      }
+    };
+    
+    updateCount();
+  };
+  
+  // Start counter animation when element is in viewport
+  const observerOptions = {
+    threshold: 0.5
+  };
+  
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+  
+  counters.forEach(counter => {
+    observer.observe(counter);
+  });
+  
+  // Testimonial slider functionality
+  const testimonialSlides = document.querySelectorAll('.testimonial-slide');
+  const prevButton = document.getElementById('prev-testimonial');
+  const nextButton = document.getElementById('next-testimonial');
+  let currentSlide = 0;
+  
+  // Initialize the first slide
+  testimonialSlides[0].classList.add('active');
+  
+  // Function to change the slide
+  const changeSlide = (n) => {
+    testimonialSlides[currentSlide].classList.remove('active');
+    currentSlide = (n + testimonialSlides.length) % testimonialSlides.length;
+    testimonialSlides[currentSlide].classList.add('active');
+  };
+  
+  // Event listeners for the buttons
+  prevButton.addEventListener('click', () => {
+    changeSlide(currentSlide - 1);
+  });
+  
+  nextButton.addEventListener('click', () => {
+    changeSlide(currentSlide + 1);
+  });
+  
+  // Auto rotate testimonials
+  setInterval(() => {
+    changeSlide(currentSlide + 1);
+  }, 5000);
+  
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+    anchor.addEventListener('click', function(e) {
+      e.preventDefault();
+      
+      const target = document.querySelector(this.getAttribute('href'));
+      if (!target) return;
+      
+      window.scrollTo({
+        top: target.offsetTop - 70,
+        behavior: 'smooth'
+      });
+    });
+  });
+});
+</script>
+{% endblock %} 

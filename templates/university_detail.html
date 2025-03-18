@@ -1,0 +1,575 @@
+{% extends "base.html" %}
+
+{% block title %}{{ university.name }} - University Matcher{% endblock %}
+
+{% block hero %}
+<section class="hero">
+    <div class="container">
+        <h1>{{ university.name }}</h1>
+        <div class="match-score-display">
+            <div class="match-score-circle" data-score="{{ university.match_score }}">
+                <span>{{ "%.1f"|format(university.match_score) }}%</span>
+            </div>
+            <div class="match-label">Match Score</div>
+        </div>
+        <p>{{ university.location }}</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="university-detail-page">
+    <div class="university-info">
+        {% if university.component_scores %}
+        <div class="card mb-4">
+            <div class="card-body">
+                <h3 class="card-title">Match Analysis</h3>
+                <p class="card-subtitle">How well this university matches your profile by category</p>
+                
+                <div class="match-component-scores">
+                    <div class="match-component">
+                        <div class="component-header academic-header">
+                            <span class="component-icon"><i class="fas fa-graduation-cap"></i></span>
+                            <span class="component-title">Academic Fit</span>
+                            <span class="component-score">{{ university.component_scores.academic }}%</span>
+                        </div>
+                        <div class="component-bar-container">
+                            <div class="component-bar academic-bar" style="width: {{ university.component_scores.academic }}%"></div>
+                        </div>
+                        <div class="component-details">
+                            <p>Based on your GPA, SAT scores, and major preferences</p>
+                        </div>
+                    </div>
+                    
+                    <div class="match-component">
+                        <div class="component-header financial-header">
+                            <span class="component-icon"><i class="fas fa-dollar-sign"></i></span>
+                            <span class="component-title">Financial Fit</span>
+                            <span class="component-score">{{ university.component_scores.financial }}%</span>
+                        </div>
+                        <div class="component-bar-container">
+                            <div class="component-bar financial-bar" style="width: {{ university.component_scores.financial }}%"></div>
+                        </div>
+                        <div class="component-details">
+                            <p>Based on your budget and scholarship opportunities</p>
+                        </div>
+                    </div>
+                    
+                    <div class="match-component">
+                        <div class="component-header location-header">
+                            <span class="component-icon"><i class="fas fa-map-marker-alt"></i></span>
+                            <span class="component-title">Location Fit</span>
+                            <span class="component-score">{{ university.component_scores.location }}%</span>
+                        </div>
+                        <div class="component-bar-container">
+                            <div class="component-bar location-bar" style="width: {{ university.component_scores.location }}%"></div>
+                        </div>
+                        <div class="component-details">
+                            <p>Based on your preferred locations and environment</p>
+                        </div>
+                    </div>
+                    
+                    <div class="match-component">
+                        <div class="component-header career-header">
+                            <span class="component-icon"><i class="fas fa-briefcase"></i></span>
+                            <span class="component-title">Career Fit</span>
+                            <span class="component-score">{{ university.component_scores.career }}%</span>
+                        </div>
+                        <div class="component-bar-container">
+                            <div class="component-bar career-bar" style="width: {{ university.component_scores.career }}%"></div>
+                        </div>
+                        <div class="component-details">
+                            <p>Based on job placement rates and industry connections</p>
+                        </div>
+                    </div>
+                    
+                    <div class="match-component">
+                        <div class="component-header campus-header">
+                            <span class="component-icon"><i class="fas fa-users"></i></span>
+                            <span class="component-title">Campus Fit</span>
+                            <span class="component-score">{{ university.component_scores.campus }}%</span>
+                        </div>
+                        <div class="component-bar-container">
+                            <div class="component-bar campus-bar" style="width: {{ university.component_scores.campus }}%"></div>
+                        </div>
+                        <div class="component-details">
+                            <p>Based on campus culture and diversity</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="detail-section">
+                    <h3>Overview</h3>
+                    <ul class="detail-list">
+                        <li>
+                            <span class="detail-label">Academic Ranking</span>
+                            <span>#{{ university.academic_rank }}</span>
+                        </li>
+                        <li>
+                            <span class="detail-label">Acceptance Rate</span>
+                            <span>{{ university.accurate_acceptance_rate|default(university.acceptance_rate) }}%</span>
+                        </li>
+                        <li>
+                            <span class="detail-label">Annual Tuition</span>
+                            <span>${{ "{:,}".format(university.tuition_fee) }}</span>
+                        </li>
+                        <li>
+                            <span class="detail-label">Scholarship Coverage</span>
+                            <span>{{ university.scholarship_percent }}%</span>
+                        </li>
+                        <li>
+                            <span class="detail-label">Job Placement Rate</span>
+                            <span>{{ university.job_placement }}%</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Location & Environment</h3>
+                    <ul class="detail-list">
+                        <li>
+                            <span class="detail-label">Location</span>
+                            <span>{{ university.location }}</span>
+                        </li>
+                        <li>
+                            <span class="detail-label">Environment</span>
+                            <span>{{ university.environment }}</span>
+                        </li>
+                        <li>
+                            <span class="detail-label">Climate</span>
+                            <span>{{ university.climate }}</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Academic Strengths</h3>
+                    <div class="strengths-list">
+                        {% for strength in university.major_strengths.split(',') %}
+                            <span class="strength-tag">{{ strength }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Campus Life</h3>
+                    <ul class="detail-list">
+                        <li>
+                            <span class="detail-label">Diversity Score</span>
+                            <span>{{ university.diversity_score }}</span>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="detail-section">
+                    <h3>Key Strengths</h3>
+                    <ul class="strengths-bullet-list">
+                        {% if university.academic_rank <= 5 %}
+                            <li>Elite academic reputation</li>
+                        {% endif %}
+                        {% if university.job_placement >= 95 %}
+                            <li>Exceptional job placement</li>
+                        {% endif %}
+                        {% if university.scholarship_percent >= 75 %}
+                            <li>Strong scholarship opportunities</li>
+                        {% endif %}
+                        {% if university.diversity_score >= 0.85 %}
+                            <li>Highly diverse campus</li>
+                        {% endif %}
+                        {% if university.academic_rank <= 15 and university.academic_rank > 5 %}
+                            <li>Strong academic reputation</li>
+                        {% endif %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="university-charts">
+        <div class="card">
+            <div class="card-body">
+                <h3>Match Profile</h3>
+                <div class="chart-container">
+                    <img src="data:image/png;base64,{{ radar_chart }}" alt="Match Profile Radar Chart" class="radar-chart">
+                </div>
+                
+                <div class="match-explanation">
+                    <h4>Why This University Matches Your Profile</h4>
+                    <p>This radar chart shows how well {{ university.name }} matches your preferences across different dimensions.</p>
+                    <ul>
+                        <li><strong>Academic:</strong> Match based on your GPA, test scores, and preferred majors</li>
+                        <li><strong>Financial:</strong> Match based on your budget and available scholarships</li>
+                        <li><strong>Location:</strong> Match based on your geographic preferences</li>
+                        <li><strong>Career:</strong> Match based on job placement rates and career opportunities</li>
+                        <li><strong>Campus:</strong> Match based on campus environment and culture</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <div class="actions-container">
+                    <h3>Actions</h3>
+                    <div class="actions-buttons">
+                        <a href="{{ url_for('recommendations') }}" class="btn btn-outline">Back to Recommendations</a>
+                        <a href="{{ url_for('compare') }}" class="btn btn-primary">Compare Universities</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the circular match score indicator
+    const scoreCircle = document.querySelector('.match-score-circle');
+    
+    if (scoreCircle) {
+        const score = parseFloat(scoreCircle.getAttribute('data-score'));
+        
+        // Calculate color based on score
+        let color;
+        if (score >= 85) {
+            color = '#2ecc71'; // Green - excellent match
+        } else if (score >= 70) {
+            color = '#3498db'; // Blue - good match
+        } else if (score >= 50) {
+            color = '#f39c12'; // Orange - moderate match
+        } else {
+            color = '#e74c3c'; // Red - poor match
+        }
+        
+        // Set color for the circle
+        scoreCircle.style.backgroundColor = color;
+    }
+});
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .strengths-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .strength-tag {
+        background-color: var(--light-bg);
+        color: var(--primary-color);
+        padding: 0.5rem 1rem;
+        border-radius: 50px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+    
+    .radar-chart {
+        width: 100%;
+        height: auto;
+        max-width: 500px;
+        margin: 0 auto;
+        display: block;
+    }
+    
+    .university-detail-page {
+        display: flex;
+        flex-direction: column;
+        margin-top: 2rem;
+    }
+    
+    .university-info, .university-charts {
+        width: 100%;
+        margin-bottom: 2rem;
+    }
+    
+    .match-score-display {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: absolute;
+        top: 20px;
+        right: 30px;
+    }
+    
+    .match-score-circle {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: var(--primary-color);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        font-size: 1.4rem;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+        margin-bottom: 5px;
+    }
+    
+    .match-label {
+        font-size: 0.9rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 500;
+    }
+    
+    .match-component-scores {
+        margin-top: 1.5rem;
+    }
+    
+    .match-component {
+        margin-bottom: 1.5rem;
+    }
+    
+    .component-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 0.5rem;
+    }
+    
+    .component-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 10px;
+        color: white;
+    }
+    
+    .academic-header .component-icon {
+        background-color: #3498db;
+    }
+    
+    .financial-header .component-icon {
+        background-color: #2ecc71;
+    }
+    
+    .location-header .component-icon {
+        background-color: #9b59b6;
+    }
+    
+    .career-header .component-icon {
+        background-color: #f1c40f;
+    }
+    
+    .campus-header .component-icon {
+        background-color: #e67e22;
+    }
+    
+    .component-title {
+        flex: 1;
+        font-weight: 600;
+        font-size: 1.1rem;
+    }
+    
+    .component-score {
+        font-weight: 700;
+        font-size: 1.2rem;
+    }
+    
+    .component-bar-container {
+        height: 10px;
+        background-color: #eee;
+        border-radius: 5px;
+        overflow: hidden;
+        margin-bottom: 0.5rem;
+    }
+    
+    .component-bar {
+        height: 100%;
+        border-radius: 5px;
+    }
+    
+    .academic-bar {
+        background-color: #3498db;
+    }
+    
+    .financial-bar {
+        background-color: #2ecc71;
+    }
+    
+    .location-bar {
+        background-color: #9b59b6;
+    }
+    
+    .career-bar {
+        background-color: #f1c40f;
+    }
+    
+    .campus-bar {
+        background-color: #e67e22;
+    }
+    
+    .component-details {
+        font-size: 0.85rem;
+        color: #666;
+        padding-left: 42px;
+    }
+    
+    .component-details p {
+        margin: 0;
+    }
+    
+    .card-title {
+        font-size: 1.3rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .card-subtitle {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 1rem;
+    }
+    
+    .detail-list {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 1.5rem;
+    }
+    
+    .detail-list li {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .detail-label {
+        font-weight: 500;
+        color: #666;
+    }
+    
+    .strengths-bullet-list {
+        list-style: none;
+        padding: 0;
+    }
+    
+    .strengths-bullet-list li {
+        position: relative;
+        padding-left: 1.5rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .strengths-bullet-list li:before {
+        content: "●";
+        color: var(--primary-color);
+        position: absolute;
+        left: 0;
+    }
+    
+    .mb-4 {
+        margin-bottom: 1.5rem;
+    }
+    
+    .card {
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .card-body {
+        padding: 1.5rem;
+    }
+    
+    .detail-section {
+        margin-bottom: 1.5rem;
+    }
+    
+    .detail-section h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        margin-bottom: 1rem;
+        color: var(--text-color);
+        border-bottom: 2px solid var(--primary-color);
+        padding-bottom: 0.5rem;
+        display: inline-block;
+    }
+    
+    .actions-container {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .actions-buttons {
+        display: flex;
+        gap: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.25rem;
+        border-radius: 6px;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s;
+    }
+    
+    .btn-outline {
+        border: 1px solid var(--primary-color);
+        color: var(--primary-color);
+        background: transparent;
+    }
+    
+    .btn-outline:hover {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .btn-primary {
+        background-color: var(--primary-color);
+        color: white;
+        border: 1px solid var(--primary-color);
+    }
+    
+    .btn-primary:hover {
+        background-color: var(--primary-dark);
+    }
+    
+    /* Responsive styles */
+    @media screen and (min-width: 992px) {
+        .university-detail-page {
+            flex-direction: row;
+            gap: 2rem;
+        }
+        
+        .university-info {
+            flex: 3;
+        }
+        
+        .university-charts {
+            flex: 2;
+        }
+    }
+    
+    @media screen and (max-width: 768px) {
+        .match-score-display {
+            position: static;
+            margin-top: 1rem;
+        }
+        
+        .match-score-circle {
+            width: 70px;
+            height: 70px;
+            font-size: 1.2rem;
+        }
+        
+        .actions-buttons {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %} 

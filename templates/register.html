@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Register - University Matcher{% endblock %}
+
+{% block hero %}
+<section class="hero">
+    <div class="container">
+        <h1>Create an Account</h1>
+        <p>Join University Matcher to save your profiles and track your university matches</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        {% if error %}
+        <div class="alert alert-error">
+            {{ error }}
+        </div>
+        {% endif %}
+        
+        <form action="{{ url_for('register') }}" method="post" class="auth-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-control" required autofocus>
+                <small class="form-text">Choose a unique username (letters, numbers, and underscores only)</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" required>
+                <small class="form-text">We'll never share your email with anyone else</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" required>
+                <small class="form-text">Use at least 8 characters with a mix of letters, numbers, and symbols</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary btn-block">Create Account</button>
+            </div>
+        </form>
+        
+        <div class="auth-footer">
+            <p>Already have an account? <a href="{{ url_for('login') }}">Login here</a></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .auth-container {
+        max-width: 450px;
+        margin: 0 auto;
+        padding: 2rem 0;
+    }
+    
+    .auth-card {
+        background-color: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--box-shadow);
+        padding: 2rem;
+    }
+    
+    .auth-form .form-group {
+        margin-bottom: 1.5rem;
+    }
+    
+    .auth-form label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+    }
+    
+    .auth-form .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        transition: var(--transition);
+    }
+    
+    .auth-form .form-control:focus {
+        border-color: var(--primary-color);
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(var(--primary-rgb), 0.2);
+    }
+    
+    .form-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--light-text);
+    }
+    
+    .btn-block {
+        width: 100%;
+    }
+    
+    .auth-footer {
+        margin-top: 2rem;
+        text-align: center;
+        color: var(--light-text);
+    }
+    
+    .auth-footer a {
+        color: var(--primary-color);
+        text-decoration: none;
+    }
+    
+    .auth-footer a:hover {
+        text-decoration: underline;
+    }
+    
+    .alert {
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        border-radius: var(--border-radius);
+    }
+    
+    .alert-error {
+        background-color: rgba(231, 76, 60, 0.1);
+        color: #e74c3c;
+        border: 1px solid rgba(231, 76, 60, 0.3);
+    }
+</style>
+{% endblock %} 

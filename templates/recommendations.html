@@ -1,0 +1,955 @@
+{% extends "base.html" %}
+
+{% block title %}Your University Matches - University Matcher{% endblock %}
+
+{% block hero %}
+<section class="hero is-primary">
+  <div class="hero-body">
+    <div class="container">
+      <h1 class="title">
+        Your University Matches
+      </h1>
+      <h2 class="subtitle">
+        Personalized recommendations based on your academic profile
+      </h2>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <!-- Filter section -->
+  <div class="box mb-5">
+    <h3 class="title is-4 mb-3">Refine Your Matches</h3>
+    
+    <form action="{{ url_for('recommendations') }}" method="get" id="filter-form">
+      <div class="columns is-multiline">
+        <!-- Location filter with region grouping -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Location</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="location" id="location-filter">
+                  <option value="">Any Location</option>
+                  <optgroup label="United States">
+                  {% for location in locations %}
+                    {% if location.endswith(', USA') or location.endswith(', US') %}
+                      <option value="{{ location }}" {% if filters.location == location %}selected{% endif %}>{{ location }}</option>
+                    {% endif %}
+                  {% endfor %}
+                  </optgroup>
+                  <optgroup label="International">
+                  {% for location in locations %}
+                    {% if not (location.endswith(', USA') or location.endswith(', US')) %}
+                    <option value="{{ location }}" {% if filters.location == location %}selected{% endif %}>{{ location }}</option>
+                    {% endif %}
+                  {% endfor %}
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Region filter -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Region</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="region" id="region-filter">
+                  <option value="">Any Region</option>
+                  <optgroup label="United States">
+                  {% for region in regions %}
+                    {% if region.country == 'USA' %}
+                      <option value="{{ region.name }}" {% if filters.region == region.name %}selected{% endif %}>{{ region.name }}</option>
+                    {% endif %}
+                  {% endfor %}
+                  </optgroup>
+                  <optgroup label="International">
+                  {% for region in regions %}
+                    {% if region.country != 'USA' %}
+                      <option value="{{ region.name }}" {% if filters.region == region.name %}selected{% endif %}>{{ region.name }} ({{ region.country }})</option>
+                    {% endif %}
+                  {% endfor %}
+                  </optgroup>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Environment filter -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Environment</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="environment" id="environment-filter">
+                  <option value="">Any Environment</option>
+                  {% for environment in environments %}
+                    <option value="{{ environment }}" {% if filters.environment == environment %}selected{% endif %}>{{ environment }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Campus size filter -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Campus Size</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="campus_size" id="campus-size-filter">
+                  <option value="">Any Size</option>
+                  {% for size in campus_sizes %}
+                    <option value="{{ size }}" {% if filters.campus_size == size %}selected{% endif %}>{{ size }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- University Type filter -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">University Type</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="university_type" id="university-type-filter">
+                  <option value="">Any Type</option>
+                  {% for type in university_types %}
+                    <option value="{{ type }}" {% if filters.university_type == type %}selected{% endif %}>{{ type }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Major filter -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Major Strength</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="major" id="major-filter">
+                  <option value="">Any Major</option>
+                  {% for major in majors %}
+                    <option value="{{ major }}" {% if filters.major == major %}selected{% endif %}>{{ major }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Acceptance rate filter - with slider -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Acceptance Rate</label>
+            <div class="columns is-mobile is-gapless">
+              <div class="column">
+            <div class="control">
+                  <input type="range" class="slider has-output is-fullwidth" min="0" max="100" step="1" 
+                         id="min-acceptance-slider" 
+                         value="{{ filters.min_acceptance or 0 }}">
+                  <output for="min-acceptance-slider" id="min-acceptance-output">{{ filters.min_acceptance or 0 }}%</output>
+                  <input type="hidden" name="min_acceptance" id="min-acceptance-input" value="{{ filters.min_acceptance or '' }}">
+                </div>
+                </div>
+                <div class="column is-narrow px-2 has-text-centered">
+                  <span class="is-flex is-align-items-center h-100">-</span>
+                </div>
+                <div class="column">
+                <div class="control">
+                  <input type="range" class="slider has-output is-fullwidth" min="0" max="100" step="1" 
+                         id="max-acceptance-slider" 
+                         value="{{ filters.max_acceptance or 100 }}">
+                  <output for="max-acceptance-slider" id="max-acceptance-output">{{ filters.max_acceptance or 100 }}%</output>
+                  <input type="hidden" name="max_acceptance" id="max-acceptance-input" value="{{ filters.max_acceptance or '' }}">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Tuition filter - with slider -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Tuition Range ($)</label>
+            <div class="control">
+              <input type="range" class="slider has-output is-fullwidth" min="0" max="70000" step="1000" 
+                     id="max-tuition-slider" 
+                     value="{{ filters.max_tuition or 70000 }}">
+              <output for="max-tuition-slider" id="max-tuition-output">${{ filters.max_tuition or 70000 }}</output>
+              <input type="hidden" name="max_tuition" id="max-tuition-input" value="{{ filters.max_tuition or '' }}">
+            </div>
+          </div>
+        </div>
+        
+        <!-- Religious affiliation filter -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Religious Affiliation</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="religious_affiliation" id="religious-filter">
+                  <option value="">Any Affiliation</option>
+                  <option value="None" {% if filters.religious_affiliation == "None" %}selected{% endif %}>None (Secular)</option>
+                  {% for affiliation in religious_affiliations %}
+                    {% if affiliation %}
+                      <option value="{{ affiliation }}" {% if filters.religious_affiliation == affiliation %}selected{% endif %}>{{ affiliation }}</option>
+                    {% endif %}
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Domestic Only checkbox -->
+        <div class="column is-half-tablet is-one-quarter-desktop">
+          <div class="field">
+            <label class="label">Country</label>
+            <div class="control">
+              <div class="select is-fullwidth">
+                <select name="country" id="country-filter">
+                  <option value="">Any Country</option>
+                  {% for country in countries %}
+                    <option value="{{ country }}" {% if filters.country == country %}selected{% endif %}>{{ country }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Action buttons -->
+        <div class="column is-half-tablet is-one-quarter-desktop is-flex is-align-items-flex-end">
+          <div class="field is-grouped is-grouped-right is-fullwidth">
+            <div class="control is-expanded">
+              <button type="submit" class="button is-primary is-fullwidth">
+                <span class="icon">
+                  <i class="fas fa-filter"></i>
+                </span>
+                <span>Apply Filters</span>
+              </button>
+            </div>
+          </div>
+        </div>
+        
+        <div class="column is-half-tablet is-one-quarter-desktop is-flex is-align-items-flex-end">
+          <div class="field is-fullwidth">
+            <div class="control is-expanded">
+              <a href="{{ url_for('recommendations') }}" class="button is-light is-fullwidth" id="clear-filters">
+                <span class="icon">
+                  <i class="fas fa-times"></i>
+                </span>
+                <span>Clear Filters</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Active filters display -->
+      <div class="active-filters mt-4" id="active-filters">
+        {% if filters and filters.values()|select|list|length > 0 %}
+          <div class="tags">
+            <span class="tag is-dark">Active Filters:</span>
+            {% for key, value in filters.items() %}
+              {% if value %}
+                <span class="tag is-info">
+                  {{ key|replace('_', ' ')|title }}: {{ value }}
+                  <button class="delete is-small remove-filter" data-filter="{{ key }}"></button>
+                </span>
+              {% endif %}
+            {% endfor %}
+          </div>
+        {% endif %}
+      </div>
+    </form>
+  </div>
+
+  <!-- Results section -->
+  <div class="columns is-multiline">
+    {% if recommendations %}
+      {% for university in recommendations %}
+        <div class="column is-half-tablet is-one-third-desktop">
+          <div class="card university-card">
+            <div class="card-content">
+              <div class="match-score-container">
+                <div class="match-score-circle" data-score="{{ university.match_score }}">
+                  <span>{{ "%.1f"|format(university.match_score) }}%</span>
+                </div>
+              </div>
+              
+              <p class="title is-4">{{ university.name }}</p>
+              <p class="subtitle is-6">{{ university.location }}</p>
+              
+              <div class="content">
+                <div class="university-stats">
+                  <div class="stat-item">
+                    <span class="stat-label">Rank:</span>
+                    <span class="stat-value">#{{ university.academic_rank }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">Acceptance:</span>
+                    <span class="stat-value">{{ university.accurate_acceptance_rate|default(university.acceptance_rate) }}%</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">Tuition:</span>
+                    <span class="stat-value">${{ "{:,}".format(university.tuition_fee) }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">Environment:</span>
+                    <span class="stat-value">{{ university.environment }}</span>
+                  </div>
+                  <div class="stat-item">
+                    <span class="stat-label">Job Placement:</span>
+                    <span class="stat-value">{{ university.job_placement }}%</span>
+                  </div>
+                </div>
+                
+                {% if university.component_scores %}
+                <div class="match-breakdown">
+                  <p class="has-text-weight-bold mb-2">Match Breakdown:</p>
+                  <div class="component-bars">
+                    <div class="component-bar-item">
+                      <div class="component-label">Academic</div>
+                      <div class="component-bar-container">
+                        <div class="component-bar academic-bar" style="width: {{ university.component_scores.academic }}%"></div>
+                      </div>
+                      <div class="component-value">{{ university.component_scores.academic }}%</div>
+                    </div>
+                    <div class="component-bar-item">
+                      <div class="component-label">Financial</div>
+                      <div class="component-bar-container">
+                        <div class="component-bar financial-bar" style="width: {{ university.component_scores.financial }}%"></div>
+                      </div>
+                      <div class="component-value">{{ university.component_scores.financial }}%</div>
+                    </div>
+                    <div class="component-bar-item">
+                      <div class="component-label">Location</div>
+                      <div class="component-bar-container">
+                        <div class="component-bar location-bar" style="width: {{ university.component_scores.location }}%"></div>
+                      </div>
+                      <div class="component-value">{{ university.component_scores.location }}%</div>
+                    </div>
+                    <div class="component-bar-item">
+                      <div class="component-label">Career</div>
+                      <div class="component-bar-container">
+                        <div class="component-bar career-bar" style="width: {{ university.component_scores.career }}%"></div>
+                      </div>
+                      <div class="component-value">{{ university.component_scores.career }}%</div>
+                    </div>
+                    <div class="component-bar-item">
+                      <div class="component-label">Campus</div>
+                      <div class="component-bar-container">
+                        <div class="component-bar campus-bar" style="width: {{ university.component_scores.campus }}%"></div>
+                      </div>
+                      <div class="component-value">{{ university.component_scores.campus }}%</div>
+                    </div>
+                  </div>
+                </div>
+                {% endif %}
+                
+                <div class="major-strengths">
+                  <p class="has-text-weight-bold">Key Strengths:</p>
+                  <div class="tags">
+                    {% for major in university.major_strengths.split(',') %}
+                      <span class="tag is-info is-light">{{ major }}</span>
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            <footer class="card-footer">
+              <a href="{{ url_for('university_detail', uni_id=university.id) }}" class="card-footer-item">Details</a>
+              {% if session.get('user_id') %}
+                <a href="#" class="card-footer-item js-save-university" data-university-id="{{ university.id }}">Save</a>
+              {% endif %}
+            </footer>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="column">
+        <div class="notification is-warning">
+          <p>No universities match your criteria. Try adjusting your filters or <a href="{{ url_for('profile') }}">update your academic profile</a>.</p>
+        </div>
+      </div>
+    {% endif %}
+  </div>
+  
+  <!-- Tools section -->
+  <div class="box mt-5">
+    <div class="columns">
+      <div class="column">
+        <h3 class="title is-4">Helpful Tools</h3>
+        <div class="buttons">
+          <a href="{{ url_for('compare') }}" class="button is-info">
+            <span class="icon">
+              <i class="fas fa-balance-scale"></i>
+            </span>
+            <span>Compare Universities</span>
+          </a>
+          {% if session.get('user_id') %}
+            <form action="{{ url_for('save_profile') }}" method="POST" style="display: inline;">
+              <input type="text" name="profile_name" placeholder="Profile Name" class="input mb-2" required>
+              <button type="submit" class="button is-success">
+              <span class="icon">
+                <i class="fas fa-save"></i>
+              </span>
+              <span>Save Profile & Recommendations</span>
+              </button>
+            </form>
+          {% endif %}
+          <a href="{{ url_for('profile') }}" class="button is-light">
+            <span class="icon">
+              <i class="fas fa-edit"></i>
+            </span>
+            <span>Edit Profile</span>
+          </a>
+        </div>
+      </div>
+      
+      <div class="column">
+        <h3 class="title is-4">About These Recommendations</h3>
+        <div class="content">
+          <p>These universities were selected based on your academic profile and preferences. The match score indicates how well each university aligns with your profile.</p>
+          <div class="match-legend mt-3">
+            <div class="columns is-mobile">
+              <div class="column is-narrow">
+                <div class="legend-item">
+                  <div class="legend-color academic-legend"></div>
+                  <span>Academic</span>
+                </div>
+              </div>
+              <div class="column is-narrow">
+                <div class="legend-item">
+                  <div class="legend-color financial-legend"></div>
+                  <span>Financial</span>
+                </div>
+              </div>
+              <div class="column is-narrow">
+                <div class="legend-item">
+                  <div class="legend-color location-legend"></div>
+                  <span>Location</span>
+                </div>
+              </div>
+              <div class="column is-narrow">
+                <div class="legend-item">
+                  <div class="legend-color career-legend"></div>
+                  <span>Career</span>
+                </div>
+              </div>
+              <div class="column is-narrow">
+                <div class="legend-item">
+                  <div class="legend-color campus-legend"></div>
+                  <span>Campus</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% if api_info.using_deepseek_api %}
+            <p class="has-text-info">
+              <span class="icon">
+                <i class="fas fa-robot"></i>
+              </span>
+              These recommendations were generated using the Deepseek AI API for enhanced matching.
+            </p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the circular match score indicators
+    const scoreCircles = document.querySelectorAll('.match-score-circle');
+    
+    scoreCircles.forEach(circle => {
+      const score = parseFloat(circle.getAttribute('data-score'));
+      
+      // Calculate color based on score
+      let color;
+      if (score >= 85) {
+        color = '#2ecc71'; // Green - excellent match
+      } else if (score >= 70) {
+        color = '#3498db'; // Blue - good match
+      } else if (score >= 50) {
+        color = '#f39c12'; // Orange - moderate match
+      } else {
+        color = '#e74c3c'; // Red - poor match
+      }
+      
+      // Set color and calculate the dasharray for the circle animation
+      circle.style.backgroundColor = color;
+    });
+    
+    // Handle save university buttons
+    const saveButtons = document.querySelectorAll('.js-save-university');
+    saveButtons.forEach(button => {
+      button.addEventListener('click', function(e) {
+        e.preventDefault();
+        const universityId = this.getAttribute('data-university-id');
+        
+        // Here you would implement the save functionality with AJAX
+        fetch(`/save_university/${universityId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            this.innerHTML = '<span class="icon"><i class="fas fa-check"></i></span><span>Saved</span>';
+            this.classList.add('is-success');
+          } else {
+            alert('Error saving university: ' + data.message);
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
+        });
+      });
+    });
+    
+    // Interactive filter functionality
+    
+    // Slider functionality
+    const minAcceptanceSlider = document.getElementById('min-acceptance-slider');
+    const maxAcceptanceSlider = document.getElementById('max-acceptance-slider');
+    const minAcceptanceOutput = document.getElementById('min-acceptance-output');
+    const maxAcceptanceOutput = document.getElementById('max-acceptance-output');
+    const minAcceptanceInput = document.getElementById('min-acceptance-input');
+    const maxAcceptanceInput = document.getElementById('max-acceptance-input');
+    
+    const maxTuitionSlider = document.getElementById('max-tuition-slider');
+    const maxTuitionOutput = document.getElementById('max-tuition-output');
+    const maxTuitionInput = document.getElementById('max-tuition-input');
+    
+    // Min acceptance slider
+    if (minAcceptanceSlider) {
+      minAcceptanceSlider.addEventListener('input', function() {
+        const value = this.value;
+        minAcceptanceOutput.textContent = value + '%';
+        minAcceptanceInput.value = value;
+        
+        // Ensure min doesn't exceed max
+        if (parseInt(value) > parseInt(maxAcceptanceSlider.value)) {
+          maxAcceptanceSlider.value = value;
+          maxAcceptanceOutput.textContent = value + '%';
+          maxAcceptanceInput.value = value;
+        }
+      });
+    }
+    
+    // Max acceptance slider
+    if (maxAcceptanceSlider) {
+      maxAcceptanceSlider.addEventListener('input', function() {
+        const value = this.value;
+        maxAcceptanceOutput.textContent = value + '%';
+        maxAcceptanceInput.value = value;
+        
+        // Ensure max doesn't go below min
+        if (parseInt(value) < parseInt(minAcceptanceSlider.value)) {
+          minAcceptanceSlider.value = value;
+          minAcceptanceOutput.textContent = value + '%';
+          minAcceptanceInput.value = value;
+        }
+      });
+    }
+    
+    // Max tuition slider
+    if (maxTuitionSlider) {
+      maxTuitionSlider.addEventListener('input', function() {
+        const value = this.value;
+        // Format with commas for thousands
+        maxTuitionOutput.textContent = '$' + parseInt(value).toLocaleString();
+        maxTuitionInput.value = value;
+      });
+    }
+    
+    // Filter removal functionality
+    const removeFilterButtons = document.querySelectorAll('.remove-filter');
+    if (removeFilterButtons) {
+      removeFilterButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+          e.preventDefault();
+          const filterName = this.getAttribute('data-filter');
+          
+          // Clear the corresponding form field
+          const formField = document.querySelector(`[name="${filterName}"]`);
+          if (formField) {
+            if (formField.type === 'checkbox') {
+              formField.checked = false;
+            } else if (formField.tagName === 'SELECT') {
+              formField.value = '';
+            } else {
+              formField.value = '';
+            }
+            
+            // Also clear any related hidden fields for sliders
+            if (filterName === 'min_acceptance' || filterName === 'max_acceptance' || filterName === 'max_tuition') {
+              const sliderId = filterName.replace('_', '-') + '-slider';
+              const sliderElement = document.getElementById(sliderId);
+              if (sliderElement) {
+                if (filterName === 'min_acceptance') {
+                  sliderElement.value = 0;
+                  minAcceptanceOutput.textContent = '0%';
+                } else if (filterName === 'max_acceptance') {
+                  sliderElement.value = 100;
+                  maxAcceptanceOutput.textContent = '100%';
+                } else if (filterName === 'max_tuition') {
+                  sliderElement.value = 70000;
+                  maxTuitionOutput.textContent = '$70,000';
+                }
+              }
+            }
+          }
+          
+          // Submit the form to refresh results
+          document.getElementById('filter-form').submit();
+        });
+      });
+    }
+    
+    // Live filter functionality - automatically submit form when select fields change
+    const selectFilters = document.querySelectorAll('select[id$="-filter"]');
+    if (selectFilters) {
+      selectFilters.forEach(select => {
+        select.addEventListener('change', function() {
+          document.body.classList.add('is-loading');
+          document.getElementById('filter-form').submit();
+        });
+      });
+    }
+    
+    // Clear all filters button
+    const clearFiltersButton = document.getElementById('clear-filters');
+    if (clearFiltersButton) {
+      clearFiltersButton.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        // Reset all form fields
+        const form = document.getElementById('filter-form');
+        const formElements = form.elements;
+        
+        for (let i = 0; i < formElements.length; i++) {
+          const element = formElements[i];
+          
+          if (element.tagName === 'SELECT') {
+            element.value = '';
+          } else if (element.type === 'checkbox') {
+            element.checked = false;
+          } else if (element.type === 'range') {
+            // Reset sliders to default values
+            if (element.id === 'min-acceptance-slider') {
+              element.value = 0;
+              minAcceptanceOutput.textContent = '0%';
+              minAcceptanceInput.value = '';
+            } else if (element.id === 'max-acceptance-slider') {
+              element.value = 100;
+              maxAcceptanceOutput.textContent = '100%';
+              maxAcceptanceInput.value = '';
+            } else if (element.id === 'max-tuition-slider') {
+              element.value = 70000;
+              maxTuitionOutput.textContent = '$70,000';
+              maxTuitionInput.value = '';
+            }
+          } else if (element.type === 'hidden') {
+            element.value = '';
+          }
+        }
+        
+        // Submit the form
+        document.body.classList.add('is-loading');
+        form.submit();
+      });
+    }
+    
+    // Add animation to university cards when they appear
+    const universityCards = document.querySelectorAll('.university-card');
+    if (universityCards.length > 0) {
+      // Stagger the animations
+      universityCards.forEach((card, index) => {
+        setTimeout(() => {
+          card.style.opacity = '1';
+          card.style.transform = 'translateY(0)';
+        }, 50 * index);
+      });
+    }
+  });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .university-card {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  
+  .university-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(10, 10, 10, 0.1);
+  }
+  
+  .university-card .card-content {
+    flex-grow: 1;
+  }
+  
+  .match-score-container {
+    position: absolute;
+    top: -15px;
+    right: 15px;
+    z-index: 2;
+  }
+  
+  .match-score-circle {
+    width: 65px;
+    height: 65px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s;
+  }
+  
+  .university-card:hover .match-score-circle {
+    transform: scale(1.1);
+  }
+  
+  .match-breakdown {
+    margin: 1.25rem 0;
+    border-top: 1px solid #eee;
+    padding-top: 1rem;
+  }
+  
+  .component-bars {
+    margin-top: 0.75rem;
+  }
+  
+  .component-bar-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .component-label {
+    flex: 0 0 20%;
+    font-size: 0.8rem;
+    color: #666;
+  }
+  
+  .component-bar-container {
+    flex: 1;
+    height: 8px;
+    background-color: #eee;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 0.5rem;
+  }
+  
+  .component-bar {
+    height: 100%;
+    border-radius: 4px;
+  }
+  
+  .component-value {
+    font-size: 0.8rem;
+    min-width: 40px;
+    text-align: right;
+    font-weight: 500;
+  }
+  
+  .academic-bar, .academic-legend {
+    background-color: #3498db;
+  }
+  
+  .financial-bar, .financial-legend {
+    background-color: #2ecc71;
+  }
+  
+  .location-bar, .location-legend {
+    background-color: #9b59b6;
+  }
+  
+  .career-bar, .career-legend {
+    background-color: #f1c40f;
+  }
+  
+  .campus-bar, .campus-legend {
+    background-color: #e67e22;
+  }
+  
+  .match-legend {
+    padding-top: 0.5rem;
+  }
+  
+  .legend-item {
+    display: flex;
+    align-items: center;
+    margin-right: 1rem;
+  }
+  
+  .legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 2px;
+    margin-right: 5px;
+  }
+  
+  .filters-section {
+    margin-bottom: 2rem;
+  }
+  
+  .university-stats {
+    margin-bottom: 1rem;
+  }
+  
+  .stat-item {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    border-bottom: 1px dotted #eee;
+    padding-bottom: 0.25rem;
+  }
+  
+  .stat-label {
+    font-weight: 500;
+    color: #555;
+  }
+  
+  .stat-value {
+    font-weight: 600;
+  }
+  
+  .major-strengths {
+    margin-top: 0.75rem;
+  }
+  
+  .tag {
+    margin-bottom: 0.25rem;
+  }
+  
+  /* Slider styling */
+  .slider {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 8px;
+    border-radius: 5px;  
+    background: #d3d3d3;
+    outline: none;
+    -webkit-transition: .2s;
+    transition: opacity .2s;
+  }
+  
+  .slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%; 
+    background: var(--primary-color);
+    cursor: pointer;
+  }
+  
+  .slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--primary-color);
+    cursor: pointer;
+  }
+  
+  .slider:hover::-webkit-slider-thumb {
+    background: var(--primary-dark);
+  }
+  
+  .slider:hover::-moz-range-thumb {
+    background: var(--primary-dark);
+  }
+  
+  output {
+    display: block;
+    text-align: center;
+    font-size: 0.8rem;
+    margin-top: 0.3rem;
+    color: var(--gray-700);
+  }
+  
+  /* Active filters tags styling */
+  .active-filters {
+    transition: all 0.3s ease;
+  }
+  
+  .active-filters .tag {
+    transition: all 0.2s ease;
+    margin-right: 0.3rem;
+  }
+  
+  .active-filters .tag:hover {
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+  
+  .remove-filter {
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  
+  .remove-filter:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
+  
+  @media screen and (max-width: 768px) {
+    .component-label {
+      flex: 0 0 25%;
+    }
+    
+    .match-score-circle {
+      width: 55px;
+      height: 55px;
+      font-size: 0.9rem;
+    }
+    
+    .slider::-webkit-slider-thumb {
+      width: 24px;
+      height: 24px;
+    }
+    
+    .slider::-moz-range-thumb {
+      width: 24px;
+      height: 24px;
+    }
+    
+    output {
+      font-size: 0.9rem;
+    }
+  }
+</style>
+{% endblock %} 

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %}API Settings - University Matcher{% endblock %}
+
+{% block hero %}
+<section class="hero">
+    <div class="container">
+        <h1>Deepseek API Settings</h1>
+        <p>Configure the Deepseek API for calculating university match scores.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h2>API Configuration</h2>
+        <p>The University Matcher can use the Deepseek API to calculate more accurate match scores. Enter your API credentials below to enable this feature.</p>
+        
+        <form action="{{ url_for('api_settings') }}" method="post">
+            <div class="form-group">
+                <label for="use_deepseek_api">Use Deepseek API</label>
+                <select id="use_deepseek_api" name="use_deepseek_api" class="form-control">
+                    <option value="true" {% if settings.use_deepseek_api == "true" %}selected{% endif %}>Enabled</option>
+                    <option value="false" {% if settings.use_deepseek_api == "false" %}selected{% endif %}>Disabled</option>
+                </select>
+                <small class="form-text">When enabled, match scores will be calculated using the Deepseek API instead of the built-in algorithm.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="deepseek_api_key">API Key</label>
+                <input type="password" class="form-control" id="deepseek_api_key" name="deepseek_api_key" value="{{ settings.deepseek_api_key }}">
+                <small class="form-text">Your Deepseek API key. Keep this confidential.</small>
+            </div>
+            
+            <div class="form-group">
+                <label for="deepseek_api_url">API URL</label>
+                <input type="text" class="form-control" id="deepseek_api_url" name="deepseek_api_url" value="{{ settings.deepseek_api_url }}">
+                <small class="form-text">The Deepseek API endpoint URL.</small>
+            </div>
+            
+            <div class="api-info">
+                <h3>About Deepseek API</h3>
+                <p>The Deepseek API provides advanced university matching capabilities using deep learning algorithms. It analyzes user profiles and university characteristics to generate more personalized match scores.</p>
+                <p>Don't have a Deepseek API key? <a href="https://deepseek.com/sign-up" target="_blank">Sign up here</a> to get one.</p>
+            </div>
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">Save Settings</button>
+                <a href="{{ url_for('index') }}" class="btn btn-outline">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .api-info {
+        background-color: var(--light-bg);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin: 2rem 0;
+    }
+    
+    .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border-color);
+        border-radius: var(--border-radius);
+        font-family: 'Inter', sans-serif;
+        font-size: 1rem;
+        transition: var(--transition);
+    }
+    
+    .form-text {
+        display: block;
+        margin-top: 0.25rem;
+        font-size: 0.875rem;
+        color: var(--light-text);
+    }
+</style>
+{% endblock %} 

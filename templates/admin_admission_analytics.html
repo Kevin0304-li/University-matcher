@@ -1,0 +1,527 @@
+{% extends "base.html" %}
+
+{% block title %}Admission Analytics - University Matcher{% endblock %}
+
+{% block hero %}
+<section class="hero">
+    <div class="container">
+        <h1>Admission Rate Analytics</h1>
+        <p>Advanced tools for analyzing and optimizing acceptance rate calculations.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="admin-dashboard">
+    <div class="dashboard-sidebar">
+        <div class="card">
+            <div class="card-body">
+                <h3>Analytics Tools</h3>
+                <ul class="nav-list">
+                    <li><a href="#overall-stats" class="active">Overall Statistics</a></li>
+                    <li><a href="#by-program">Rates by Program</a></li>
+                    <li><a href="#time-analysis">Temporal Analysis</a></li>
+                    <li><a href="#data-validation">Data Validation</a></li>
+                </ul>
+                
+                <h3 class="mt-4">Actions</h3>
+                <form action="{{ url_for('admin_admission_analytics') }}" method="post" class="filter-form">
+                    <div class="form-group">
+                        <label for="university">University</label>
+                        <select id="university" name="university_id" class="form-control">
+                            {% for uni in universities %}
+                            <option value="{{ uni.id }}" {% if uni.id == selected_university_id %}selected{% endif %}>{{ uni.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="include_incomplete">Include Incomplete Apps</label>
+                        <select id="include_incomplete" name="include_incomplete" class="form-control">
+                            <option value="false" {% if not include_incomplete %}selected{% endif %}>No</option>
+                            <option value="true" {% if include_incomplete %}selected{% endif %}>Yes</option>
+                        </select>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">Update Analytics</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="dashboard-content">
+        <!-- Overall Statistics -->
+        <div id="overall-stats" class="card">
+            <div class="card-body">
+                <h2>Overall Acceptance Statistics</h2>
+                
+                <div class="stats-summary">
+                    <div class="stat-card">
+                        <div class="stat-value">{{ "%.1f"|format(stats.admission_rate) }}%</div>
+                        <div class="stat-label">Acceptance Rate</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">{{ stats.admitted_count }}</div>
+                        <div class="stat-label">Admitted</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">{{ stats.total_valid_applications }}</div>
+                        <div class="stat-label">Valid Applications</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-value">{{ stats.incomplete_count }}</div>
+                        <div class="stat-label">Incomplete</div>
+                    </div>
+                </div>
+                
+                <div class="stats-chart">
+                    <img src="data:image/png;base64,{{ stats.overall_chart }}" alt="Overall Statistics Chart">
+                </div>
+                
+                <div class="stats-explanation">
+                    <h4>Calculation Method:</h4>
+                    <p>Accurate acceptance rate = (Admitted students ÷ Valid applications) × 100%</p>
+                    <ul>
+                        <li>Valid applications: Complete applications with final decisions (admitted or rejected)</li>
+                        <li>Excludes incomplete applications by default (toggle in sidebar to include)</li>
+                        <li>Accounts for applications across all programs and time periods</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Program Analysis -->
+        <div id="by-program" class="card">
+            <div class="card-body">
+                <h2>Acceptance Rates by Program</h2>
+                <p>Stratified analysis of acceptance rates across different programs.</p>
+                
+                {% if program_stats %}
+                <div class="program-stats-table">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Program</th>
+                                <th>Applications</th>
+                                <th>Admitted</th>
+                                <th>Acceptance Rate</th>
+                                <th>Comparison</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for program, data in program_stats.items() %}
+                            <tr>
+                                <td>{{ program }}</td>
+                                <td>{{ data.applications }}</td>
+                                <td>{{ data.admitted }}</td>
+                                <td>{{ "%.1f"|format(data.admission_rate) }}%</td>
+                                <td>
+                                    {% if data.admission_rate > stats.admission_rate %}
+                                    <span class="trend-up">+{{ "%.1f"|format(data.admission_rate - stats.admission_rate) }}%</span>
+                                    {% elif data.admission_rate < stats.admission_rate %}
+                                    <span class="trend-down">-{{ "%.1f"|format(stats.admission_rate - data.admission_rate) }}%</span>
+                                    {% else %}
+                                    <span class="trend-neutral">0%</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="stats-chart">
+                    <img src="data:image/png;base64,{{ stats.program_chart }}" alt="Program Statistics Chart">
+                </div>
+                {% else %}
+                <div class="no-data-message">
+                    <p>No program-specific data available for this university.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Temporal Analysis -->
+        <div id="time-analysis" class="card">
+            <div class="card-body">
+                <h2>Acceptance Rate Trends</h2>
+                <p>Analysis of how acceptance rates have changed over time.</p>
+                
+                <div class="time-selector">
+                    <form action="{{ url_for('admin_admission_analytics') }}" method="post" class="inline-form">
+                        <input type="hidden" name="university_id" value="{{ selected_university_id }}">
+                        <input type="hidden" name="include_incomplete" value="{{ 'true' if include_incomplete else 'false' }}">
+                        
+                        <div class="form-group inline">
+                            <label for="time_interval">Time Interval:</label>
+                            <select id="time_interval" name="time_interval" class="form-control">
+                                <option value="month" {% if time_interval == 'month' %}selected{% endif %}>Monthly</option>
+                                <option value="quarter" {% if time_interval == 'quarter' %}selected{% endif %}>Quarterly</option>
+                                <option value="year" {% if time_interval == 'year' %}selected{% endif %}>Yearly</option>
+                            </select>
+                        </div>
+                        
+                        <button type="submit" class="btn btn-outline">Update</button>
+                    </form>
+                </div>
+                
+                {% if time_stats %}
+                <div class="stats-chart">
+                    <img src="data:image/png;base64,{{ stats.time_chart }}" alt="Time-based Statistics Chart">
+                </div>
+                
+                <div class="trend-analysis">
+                    <h4>Trend Analysis:</h4>
+                    <p>{{ time_analysis.trend_description }}</p>
+                    
+                    {% if time_analysis.recommendations %}
+                    <div class="recommendations">
+                        <h5>Recommendations:</h5>
+                        <ul>
+                            {% for rec in time_analysis.recommendations %}
+                            <li>{{ rec }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="no-data-message">
+                    <p>No temporal data available for analysis.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Data Validation -->
+        <div id="data-validation" class="card">
+            <div class="card-body">
+                <h2>Data Validation</h2>
+                <p>Data integrity analysis and validation results.</p>
+                
+                <div class="validation-summary">
+                    <div class="validation-status {% if validation.is_valid %}valid{% else %}invalid{% endif %}">
+                        <div class="status-icon"></div>
+                        <div class="status-text">
+                            {% if validation.is_valid %}
+                            <h4>All Data Valid</h4>
+                            <p>No issues detected with application data.</p>
+                            {% else %}
+                            <h4>{{ validation.issues_found }} Issue{% if validation.issues_found != 1 %}s{% endif %} Detected</h4>
+                            <p>Some data requires attention for accurate calculations.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if validation.issues %}
+                <div class="issues-list">
+                    <h4>Issues Detected:</h4>
+                    <ul>
+                        {% for issue in validation.issues %}
+                        <li>
+                            <strong>{{ issue.type|replace('_', ' ')|title }}:</strong> 
+                            {{ issue.message or issue.count }} records affected.
+                            {% if issue.examples %}
+                            <button class="toggle-examples btn-sm">Show Examples</button>
+                            <div class="examples-container" style="display: none;">
+                                <pre>{{ issue.examples|tojson(indent=2) }}</pre>
+                            </div>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="validation-actions">
+                    <a href="{{ url_for('admin_fix_data_issues', university_id=selected_university_id) }}" class="btn {% if validation.is_valid %}disabled{% endif %}">Fix Data Issues</a>
+                    <a href="{{ url_for('admin_export_data', university_id=selected_university_id) }}" class="btn btn-outline">Export Data</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Navigation between sections
+        const navLinks = document.querySelectorAll('.nav-list a');
+        const sections = document.querySelectorAll('.dashboard-content > .card');
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active class from all links
+                navLinks.forEach(l => l.classList.remove('active'));
+                
+                // Add active class to clicked link
+                this.classList.add('active');
+                
+                // Show target section and hide others
+                const targetId = this.getAttribute('href').substring(1);
+                sections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.style.display = 'block';
+                    } else {
+                        section.style.display = 'none';
+                    }
+                });
+            });
+        });
+        
+        // Toggle examples visibility
+        const toggleButtons = document.querySelectorAll('.toggle-examples');
+        toggleButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const container = this.nextElementSibling;
+                if (container.style.display === 'none') {
+                    container.style.display = 'block';
+                    this.textContent = 'Hide Examples';
+                } else {
+                    container.style.display = 'none';
+                    this.textContent = 'Show Examples';
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .admin-dashboard {
+        display: flex;
+        gap: 2rem;
+    }
+    
+    .dashboard-sidebar {
+        flex: 0 0 300px;
+    }
+    
+    .dashboard-content {
+        flex: 1;
+    }
+    
+    .nav-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+    
+    .nav-list li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .nav-list a {
+        display: block;
+        padding: 0.5rem 1rem;
+        color: var(--text-color);
+        border-radius: var(--border-radius);
+        text-decoration: none;
+    }
+    
+    .nav-list a:hover, .nav-list a.active {
+        background-color: var(--primary-color);
+        color: white;
+    }
+    
+    .mt-4 {
+        margin-top: 2rem;
+    }
+    
+    .stats-summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        flex: 1 0 150px;
+        background-color: var(--light-bg);
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary-color);
+    }
+    
+    .stat-label {
+        font-size: 0.9rem;
+        color: var(--light-text);
+        margin-top: 0.5rem;
+    }
+    
+    .stats-chart {
+        margin: 2rem 0;
+        text-align: center;
+    }
+    
+    .stats-chart img {
+        max-width: 100%;
+        height: auto;
+    }
+    
+    .table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    
+    .table th, .table td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+    }
+    
+    .table th {
+        text-align: left;
+        font-weight: 600;
+    }
+    
+    .trend-up {
+        color: #28a745;
+    }
+    
+    .trend-down {
+        color: #dc3545;
+    }
+    
+    .trend-neutral {
+        color: #6c757d;
+    }
+    
+    .validation-status {
+        display: flex;
+        align-items: center;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 1.5rem;
+    }
+    
+    .validation-status.valid {
+        background-color: rgba(40, 167, 69, 0.1);
+    }
+    
+    .validation-status.invalid {
+        background-color: rgba(220, 53, 69, 0.1);
+    }
+    
+    .status-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 1rem;
+    }
+    
+    .valid .status-icon {
+        background-color: #28a745;
+        position: relative;
+    }
+    
+    .valid .status-icon:after {
+        content: '✓';
+        color: white;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+    }
+    
+    .invalid .status-icon {
+        background-color: #dc3545;
+        position: relative;
+    }
+    
+    .invalid .status-icon:after {
+        content: '!';
+        color: white;
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+    
+    .issues-list {
+        margin-bottom: 1.5rem;
+    }
+    
+    .toggle-examples {
+        background-color: var(--light-bg);
+        border: none;
+        padding: 0.25rem 0.5rem;
+        border-radius: 4px;
+        margin-left: 0.5rem;
+        cursor: pointer;
+    }
+    
+    .examples-container {
+        margin-top: 0.5rem;
+        background-color: var(--light-bg);
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        overflow-x: auto;
+    }
+    
+    .examples-container pre {
+        margin: 0;
+        white-space: pre-wrap;
+    }
+    
+    .validation-actions {
+        margin-top: 2rem;
+        display: flex;
+        gap: 1rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.875rem;
+        padding: 0.25rem 0.5rem;
+    }
+    
+    .disabled {
+        opacity: 0.5;
+        pointer-events: none;
+    }
+    
+    .time-selector {
+        margin-bottom: 1.5rem;
+    }
+    
+    .inline-form {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .form-group.inline {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .no-data-message {
+        padding: 2rem;
+        text-align: center;
+        background-color: var(--light-bg);
+        border-radius: var(--border-radius);
+    }
+    
+    /* Make only the first section visible by default */
+    .dashboard-content > .card:not(:first-child) {
+        display: none;
+    }
+</style>
+{% endblock %} 

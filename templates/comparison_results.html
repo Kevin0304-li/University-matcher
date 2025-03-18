@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Advanced University Comparison - University Matcher{% endblock %}
+
+{% block hero %}
+<section class="hero">
+    <div class="container">
+        <h1>Advanced University Comparison</h1>
+        <p>Multi-dimensional analysis of your selected universities</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-body">
+        <h3>Comprehensive Analysis</h3>
+        <p>Our advanced visualization below provides a holistic comparison using multiple complementary views.</p>
+        
+        <div class="chart-container">
+            <img src="data:image/png;base64,{{ comparison_chart }}" alt="Advanced University Comparison" class="comparison-chart">
+        </div>
+        
+        <div class="chart-explanation">
+            <h4>Understanding This Visualization</h4>
+            <p>This multi-faceted comparison provides three complementary views:</p>
+            
+            <div class="explanation-grid">
+                <div class="explanation-item">
+                    <h5>1. Radar Chart (Top)</h5>
+                    <p>Shows how universities compare across six key dimensions. Larger shapes indicate stronger overall profiles.</p>
+                    <ul>
+                        <li><strong>Academic Strength:</strong> Based on rankings and academic reputation</li>
+                        <li><strong>Affordability:</strong> Inverse of tuition costs (higher is more affordable)</li>
+                        <li><strong>Selectivity:</strong> How exclusive the admissions process is</li>
+                        <li><strong>Career Prospects:</strong> Job placement rates and career outcomes</li>
+                        <li><strong>Scholarship:</strong> Availability of financial aid</li>
+                        <li><strong>Diversity:</strong> Campus diversity metrics</li>
+                    </ul>
+                </div>
+                
+                <div class="explanation-item">
+                    <h5>2. Bar Chart (Bottom Left)</h5>
+                    <p>Compares key numeric metrics directly. Shows actual values rather than just normalized scores.</p>
+                    <ul>
+                        <li><strong>Match Score:</strong> How well each university aligns with your specific profile</li>
+                        <li><strong>Academic Rank:</strong> Transformed so higher bars represent better rankings</li>
+                        <li><strong>Tuition:</strong> Annual costs in thousands of dollars</li>
+                        <li><strong>Acceptance Rate:</strong> Percentage of applicants admitted</li>
+                    </ul>
+                </div>
+                
+                <div class="explanation-item">
+                    <h5>3. Comparison Table (Bottom Right)</h5>
+                    <p>Detailed side-by-side comparison with actual values. Green highlighting indicates the best value in each category.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card decision-factors">
+    <div class="card-body">
+        <h3>Key Decision Factors</h3>
+        <p>Based on this comparison, here are the primary factors to consider:</p>
+        
+        <div class="factors-grid">
+            {% for uni in universities %}
+            <div class="university-strengths">
+                <h4>{{ uni.name }} Strengths</h4>
+                <ul>
+                    {% if uni.academic_rank <= 5 %}
+                    <li>Elite academic reputation (ranked #{{ uni.academic_rank }})</li>
+                    {% elif uni.academic_rank <= 20 %}
+                    <li>Strong academic standing (ranked #{{ uni.academic_rank }})</li>
+                    {% endif %}
+                    
+                    {% if uni.job_placement >= 95 %}
+                    <li>Exceptional job placement rate ({{ uni.job_placement }}%)</li>
+                    {% elif uni.job_placement >= 85 %}
+                    <li>Strong career outcomes ({{ uni.job_placement }}% job placement)</li>
+                    {% endif %}
+                    
+                    {% if uni.scholarship_percent >= 80 %}
+                    <li>Outstanding scholarship opportunities ({{ uni.scholarship_percent }}% coverage)</li>
+                    {% elif uni.scholarship_percent >= 60 %}
+                    <li>Good financial aid options ({{ uni.scholarship_percent }}% scholarship coverage)</li>
+                    {% endif %}
+                    
+                    {% if uni.environment == "Urban" %}
+                    <li>Urban location offering city amenities and opportunities</li>
+                    {% elif uni.environment == "College town" %}
+                    <li>Classic college town experience</li>
+                    {% elif uni.environment == "Suburban" %}
+                    <li>Suburban setting balancing tranquility and accessibility</li>
+                    {% endif %}
+                    
+                    {% if uni.match_score >= 90 %}
+                    <li>Exceptional overall match ({{ uni.match_score }}%) with your profile</li>
+                    {% elif uni.match_score >= 75 %}
+                    <li>Strong overall match ({{ uni.match_score }}%) with your profile</li>
+                    {% endif %}
+                </ul>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="recommendation-summary">
+            <h4>Final Considerations</h4>
+            <p>When making your decision, weigh these factors based on your personal priorities:</p>
+            <ul>
+                <li><strong>Academic Goals:</strong> Consider how each university's academic strengths align with your field of interest</li>
+                <li><strong>Financial Picture:</strong> Balance tuition costs against scholarship opportunities and potential ROI</li>
+                <li><strong>Location Preferences:</strong> Consider climate, environment, and proximity to opportunities</li>
+                <li><strong>Career Alignment:</strong> Evaluate job placement rates in context of your career goals</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<div class="actions-container">
+    <a href="{{ url_for('compare') }}" class="btn btn-outline">Select Different Universities</a>
+    <a href="{{ url_for('recommendations') }}" class="btn btn-primary">View All Recommendations</a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comparison-chart {
+        width: 100%;
+        height: auto;
+        max-width: 1200px;
+        margin: 0 auto 2rem;
+        display: block;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        border-radius: var(--border-radius);
+    }
+    
+    .chart-explanation {
+        background-color: var(--light-bg);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin-top: 1.5rem;
+    }
+    
+    .explanation-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1rem;
+    }
+    
+    .explanation-item {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    }
+    
+    .explanation-item h5 {
+        color: var(--primary-color);
+        margin-bottom: 0.5rem;
+    }
+    
+    .explanation-item ul {
+        margin-top: 0.75rem;
+        padding-left: 1.5rem;
+    }
+    
+    .factors-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+    
+    .university-strengths {
+        background-color: var(--light-bg);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+    }
+    
+    .university-strengths h4 {
+        color: var(--primary-color);
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .university-strengths ul {
+        padding-left: 1.5rem;
+    }
+    
+    .university-strengths li {
+        margin-bottom: 0.5rem;
+    }
+    
+    .recommendation-summary {
+        background-color: rgba(var(--primary-rgb), 0.05);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin-top: 1rem;
+    }
+    
+    .recommendation-summary h4 {
+        color: var(--primary-color);
+        margin-bottom: 0.75rem;
+    }
+    
+    .decision-factors {
+        margin-top: 2rem;
+    }
+    
+    .actions-container {
+        display: flex;
+        gap: 1rem;
+        margin-top: 2rem;
+        justify-content: center;
+    }
+    
+    @media (max-width: 768px) {
+        .explanation-grid,
+        .factors-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %} 

@@ -1,0 +1,367 @@
+{% extends "base.html" %}
+
+{% block title %}Compare Universities - University Matcher{% endblock %}
+
+{% block hero %}
+<section class="hero">
+    <div class="container">
+        <h1>Compare Universities</h1>
+        <p>Select universities to compare side by side.</p>
+    </div>
+</section>
+{% endblock %}
+
+{% block content %}
+<div class="comparison-form">
+    {% if error %}
+    <div class="alert alert-error">
+        {{ error }}
+    </div>
+    {% endif %}
+    
+    <form id="compare-form" action="{{ url_for('compare') }}" method="post">
+        <h3>Select Universities to Compare</h3>
+        <p>Choose 2-3 universities to compare their key metrics side by side.</p>
+        
+        <div class="selected-universities-container">
+            <div class="selected-universities">
+                <!-- Selected universities will appear here -->
+                <div class="empty-selection">
+                    <p>No universities selected</p>
+                    <p class="subtext">Select from the list below</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="search-filter">
+            <input type="text" id="university-search" placeholder="Search universities..." class="search-input">
+        </div>
+        
+        <div class="university-list">
+            {% for uni in recommendations %}
+            <div class="university-item" data-name="{{ uni.name }}" data-id="{{ uni.id }}">
+                <div class="university-item-details">
+                    <h4>{{ uni.name }}</h4>
+                    <p>{{ uni.location }}</p>
+                </div>
+                <button type="button" class="btn btn-select">Select</button>
+                <input type="checkbox" id="uni-{{ uni.id }}" name="university_ids" value="{{ uni.id }}" style="display: none;">
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary btn-compare" disabled>Compare Selected Universities</button>
+        </div>
+    </form>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <h3>Comparison Tips</h3>
+        <p>When comparing universities, consider these factors:</p>
+        <ul>
+            <li><strong>Match Score:</strong> Your overall compatibility based on all factors</li>
+            <li><strong>Academic Rank:</strong> The university's academic standing</li>
+            <li><strong>Tuition:</strong> Annual cost before financial aid</li>
+            <li><strong>Acceptance Rate:</strong> Percentage of applicants admitted</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('compare-form');
+        const submitButton = form.querySelector('.btn-compare');
+        const selectedContainer = form.querySelector('.selected-universities');
+        const emptySelection = selectedContainer.querySelector('.empty-selection');
+        const universityItems = document.querySelectorAll('.university-item');
+        const searchInput = document.getElementById('university-search');
+        
+        // Track selected universities
+        let selectedCount = 0;
+        let selectedUniversities = [];
+        
+        // Handle university selection
+        universityItems.forEach(item => {
+            const selectButton = item.querySelector('.btn-select');
+            const checkbox = item.querySelector('input[type="checkbox"]');
+            const uniId = item.dataset.id;
+            const uniName = item.dataset.name;
+            
+            selectButton.addEventListener('click', function() {
+                if (checkbox.checked) {
+                    // Deselect
+                    checkbox.checked = false;
+                    item.classList.remove('selected');
+                    selectButton.textContent = 'Select';
+                    selectedCount--;
+                    
+                    // Remove from selected display
+                    const selectedItem = selectedContainer.querySelector(`[data-id="${uniId}"]`);
+                    if (selectedItem) {
+                        selectedItem.remove();
+                    }
+                    
+                    // Update selected universities array
+                    selectedUniversities = selectedUniversities.filter(uni => uni.id !== uniId);
+                } else {
+                    // Check if we already have 3 selected
+                    if (selectedCount >= 3) {
+                        alert('You can only compare up to 3 universities at once.');
+                        return;
+                    }
+                    
+                    // Select
+                    checkbox.checked = true;
+                    item.classList.add('selected');
+                    selectButton.textContent = 'Remove';
+                    selectedCount++;
+                    
+                    // Add to selected universities array
+                    selectedUniversities.push({
+                        id: uniId,
+                        name: uniName
+                    });
+                    
+                    // Add to selected display
+                    addToSelectedDisplay(uniId, uniName);
+                }
+                
+                // Update submit button state
+                updateSubmitButton();
+                // Update empty selection visibility
+                updateEmptySelection();
+            });
+        });
+        
+        // Add university to selected display
+        function addToSelectedDisplay(id, name) {
+            const selectedUni = document.createElement('div');
+            selectedUni.className = 'selected-university';
+            selectedUni.dataset.id = id;
+            selectedUni.innerHTML = `
+                <span>${name}</span>
+                <button type="button" class="btn-remove">×</button>
+            `;
+            
+            // Add remove functionality
+            selectedUni.querySelector('.btn-remove').addEventListener('click', function() {
+                // Find and uncheck the original checkbox
+                const checkbox = document.querySelector(`#uni-${id}`);
+                if (checkbox) {
+                    checkbox.checked = false;
+                    
+                    // Update the selection button
+                    const item = document.querySelector(`.university-item[data-id="${id}"]`);
+                    if (item) {
+                        item.classList.remove('selected');
+                        item.querySelector('.btn-select').textContent = 'Select';
+                    }
+                }
+                
+                // Remove from selected display
+                selectedUni.remove();
+                selectedCount--;
+                
+                // Update selected universities array
+                selectedUniversities = selectedUniversities.filter(uni => uni.id !== id);
+                
+                // Update submit button state
+                updateSubmitButton();
+                // Update empty selection visibility
+                updateEmptySelection();
+            });
+            
+            selectedContainer.appendChild(selectedUni);
+        }
+        
+        // Update submit button state
+        function updateSubmitButton() {
+            if (selectedCount >= 2) {
+                submitButton.disabled = false;
+                submitButton.classList.add('active');
+            } else {
+                submitButton.disabled = true;
+                submitButton.classList.remove('active');
+            }
+        }
+        
+        // Update empty selection visibility
+        function updateEmptySelection() {
+            if (selectedCount > 0) {
+                emptySelection.style.display = 'none';
+            } else {
+                emptySelection.style.display = 'block';
+            }
+        }
+        
+        // Search functionality
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase().trim();
+            
+            universityItems.forEach(item => {
+                const name = item.dataset.name.toLowerCase();
+                
+                if (query === '' || name.includes(query)) {
+                    item.style.display = 'flex';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+        
+        // Initialize state
+        updateSubmitButton();
+        updateEmptySelection();
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .comparison-form {
+        margin-bottom: 2rem;
+    }
+    
+    .university-list {
+        max-height: 400px;
+        overflow-y: auto;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-top: 1rem;
+    }
+    
+    .university-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s;
+    }
+    
+    .university-item:last-child {
+        border-bottom: none;
+    }
+    
+    .university-item:hover {
+        background-color: #f9f9f9;
+    }
+    
+    .university-item.selected {
+        background-color: #f0f7ff;
+    }
+    
+    .university-item-details {
+        flex: 1;
+    }
+    
+    .university-item-details h4 {
+        margin: 0;
+        font-size: 1rem;
+    }
+    
+    .university-item-details p {
+        margin: 0.25rem 0 0;
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    .btn-select {
+        padding: 0.25rem 0.75rem;
+        border-radius: 4px;
+        background-color: #e0e0e0;
+        border: none;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .btn-select:hover {
+        background-color: #d0d0d0;
+    }
+    
+    .selected .btn-select {
+        background-color: #ff6b6b;
+        color: white;
+    }
+    
+    .search-filter {
+        margin-bottom: 1rem;
+    }
+    
+    .search-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-size: 1rem;
+    }
+    
+    .selected-universities-container {
+        margin: 1.5rem 0;
+    }
+    
+    .selected-universities {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+        min-height: 60px;
+    }
+    
+    .selected-university {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        background-color: #e6f7ff;
+        border: 1px solid #91d5ff;
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+    }
+    
+    .btn-remove {
+        background: none;
+        border: none;
+        color: #f56565;
+        font-size: 1.25rem;
+        cursor: pointer;
+        padding: 0;
+        line-height: 1;
+    }
+    
+    .empty-selection {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        color: #888;
+    }
+    
+    .empty-selection p {
+        margin: 0;
+    }
+    
+    .empty-selection .subtext {
+        font-size: 0.875rem;
+        margin-top: 0.25rem;
+    }
+    
+    .btn-compare.active {
+        background-color: #3273dc;
+        color: white;
+    }
+    
+    .btn-compare:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    .form-actions {
+        margin-top: 1.5rem;
+        text-align: center;
+    }
+</style>
+{% endblock %} 
