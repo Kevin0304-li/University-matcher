@@ -24,6 +24,15 @@ os.environ["DEEPSEEK_API_KEY"] = os.environ.get("DEEPSEEK_API_KEY", "")
 os.environ["DEEPSEEK_API_URL"] = os.environ.get("DEEPSEEK_API_URL", 
                                               "https://api.deepseek.com/v1/match")
 
+# Add custom Jinja2 filters
+@app.template_filter('format_number')
+def format_number(value):
+    """Format a number with commas as thousands separators"""
+    try:
+        return f"{int(value):,}"
+    except (ValueError, TypeError):
+        return value
+
 # Initialize database and matcher
 db = UniversityDatabase()
 db.insert_sample_data()
@@ -31,6 +40,49 @@ matcher = UniversityMatcher(db)
 
 # Add a lock for thread safety
 db_lock = threading.Lock()
+
+def get_user_profile():
+    """Get user profile from session or create a default one"""
+    if 'user_profile' in session:
+        return session['user_profile']
+    
+    # For logged-in users, try to get profile from DB
+    if 'user_id' in session:
+        user_id = session['user_id']
+        profiles = db.get_user_profiles(user_id)
+        
+        if profiles and len(profiles) > 0:
+            # Get the most recent profile
+            profile = profiles[0]
+            
+            # Format for consistency
+            user_profile = {
+                "gpa": float(profile.get('gpa', 3.5)),
+                "sat_score": int(profile.get('sat_score', 1200)),
+                "preferred_majors": profile.get('majors', '').split(',') if profile.get('majors') else [],
+                "budget": int(profile.get('budget', 30000)),
+                "preferred_locations": profile.get('locations', '').split(',') if profile.get('locations') else [],
+                "preferred_environment": profile.get('environment', 'Urban')
+            }
+            
+            return user_profile
+    
+    # Default profile if nothing is found
+    return {
+        "gpa": 3.5,
+        "sat_score": 1200,
+        "preferred_majors": ["Computer Science", "Engineering"],
+        "budget": 30000,
+        "preferred_locations": ["Boston, MA, USA", "New York, NY, USA"],
+        "preferred_environment": "Urban",
+        "importance_weights": {
+            "academic": 0.35,
+            "financial": 0.3,
+            "location": 0.15,
+            "career": 0.15,
+            "campus": 0.05
+        }
+    }
 
 # Authentication decorator
 def login_required(view_func):
@@ -164,25 +216,33 @@ def profile():
     if request.method == 'POST':
         try:
             # Get form data
-            gpa = float(request.form['gpa'])
-            sat_score = int(request.form['sat_score'])
+            gpa = float(request.form.get('gpa', 3.5))
+            sat_score = int(request.form.get('sat_score', 1200))
             
+            # Handle majors - check for both new and old format
+            preferred_majors = request.form.getlist('preferred_majors')
+            if not preferred_majors and 'majors' in request.form:
+                # Fallback to old format if present
             majors = request.form['majors']
             preferred_majors = [m.strip() for m in majors.split(",") if m.strip()]
             
-            budget = int(request.form['budget'])
+            budget = int(request.form.get('budget', 30000))
             
+            # Handle locations - check for both formats
+            preferred_locations = request.form.getlist('preferred_locations')
+            if not preferred_locations and 'locations' in request.form:
+                # Fallback to old format if present
             locations = request.form['locations']
             preferred_locations = [loc.strip() for loc in locations.split(",") if loc.strip()]
             
-            environment = request.form['environment']
+            environment = request.form.get('preferred_environment', 'Urban')
             
-            # Get weights
-            academic_weight = int(request.form['academic_weight'])
-            financial_weight = int(request.form['financial_weight'])
-            location_weight = int(request.form['location_weight'])
-            career_weight = int(request.form['career_weight'])
-            campus_weight = int(request.form['campus_weight'])
+            # Get weights with defaults
+            academic_weight = int(request.form.get('weight_academic', 5))
+            financial_weight = int(request.form.get('weight_financial', 5))
+            location_weight = int(request.form.get('weight_location', 5))
+            career_weight = int(request.form.get('weight_career', 5))
+            campus_weight = int(request.form.get('weight_campus', 5))
             
             # Create user profile
             user_profile = {
@@ -195,27 +255,110 @@ def profile():
             }
             
             # Create weights
+            total_weight = academic_weight + financial_weight + location_weight + career_weight + campus_weight
+            if total_weight == 0:
+                total_weight = 1  # Avoid division by zero
+                
+            # Normalize weights to ensure they sum to 1
             weights = {
-                "academic": float(academic_weight),
-                "financial": float(financial_weight),
-                "location": float(location_weight),
-                "career": float(career_weight),
-                "campus": float(campus_weight)
+                "academic": float(academic_weight) / total_weight,
+                "financial": float(financial_weight) / total_weight,
+                "location": float(location_weight) / total_weight,
+                "career": float(career_weight) / total_weight,
+                "campus": float(campus_weight) / total_weight
             }
             
             # Store in session
             session['user_profile'] = user_profile
             session['weights'] = weights
             
-            # Generate recommendations
+            # If edit_profile_id is provided, update existing profile
+            edit_profile_id = request.args.get('edit_profile_id')
+            if edit_profile_id:
+                profile_id = int(edit_profile_id)
+                
+                # Format data for database
+                profile_data = {
+                    'id': profile_id,
+                    'user_id': session['user_id'],
+                    'profile_name': request.form.get('profile_name', 'My Profile'),
+                    'gpa': gpa,
+                    'sat_score': sat_score,
+                    'majors': ','.join(preferred_majors),
+                    'budget': budget,
+                    'locations': ','.join(preferred_locations),
+                    'environment': environment,
+                    'weights': json.dumps(weights)
+                }
+                
+                # Update profile in DB
+                success = db.update_user_profile(profile_data)
+                
+                if success:
+                    flash("Profile updated successfully!", "success")
+                else:
+                    flash("Failed to update profile. Please try again.", "error")
+            else:
+                # Format data for database
+                profile_data = {
+                    'user_id': session['user_id'],
+                    'profile_name': request.form.get('profile_name', 'My Profile'),
+                    'gpa': gpa,
+                    'sat_score': sat_score,
+                    'majors': ','.join(preferred_majors),
+                    'budget': budget,
+                    'locations': ','.join(preferred_locations),
+                    'environment': environment,
+                    'weights': json.dumps(weights)
+                }
+                
+                # Save profile to DB
+                success = db.save_user_profile(session['user_id'], profile_data)
+                
+                if success:
+                    flash("Profile saved successfully!", "success")
+                else:
+                    flash("Failed to save profile. Please try again.", "error")
+                    
+            # Redirect to recommendations
             return redirect(url_for('recommendations'))
-            
-        except ValueError:
-            error = "Please enter valid values for all fields."
-            return render_template('profile.html', error=error)
+        except Exception as e:
+            flash(f"Error processing profile: {str(e)}", "error")
+            print(f"Profile error: {e}")
     
-    # For GET requests or if form validation fails
-    return render_template('profile.html')
+    # For GET request, show the form
+    edit_profile = None
+    edit_profile_id = request.args.get('edit_profile_id')
+    
+    if edit_profile_id:
+        try:
+            # Get profile from DB
+            profile = db.get_user_profile(int(edit_profile_id))
+            
+            if profile:
+                # Format for template
+                edit_profile = {
+                    'id': profile['id'],
+                    'profile_name': profile.get('profile_name', 'My Profile'),
+                    'gpa': profile.get('gpa', 3.5),
+                    'sat_score': profile.get('sat_score', 1200),
+                    'preferred_majors': profile.get('majors', '').split(',') if profile.get('majors') else [],
+                    'budget': profile.get('budget', 30000),
+                    'preferred_locations': profile.get('locations', '').split(',') if profile.get('locations') else [],
+                    'preferred_environment': profile.get('environment', 'Urban'),
+                    'importance_weights': json.loads(profile.get('weights', '{}')) if profile.get('weights') else {
+                        "academic": 0.35,
+                        "financial": 0.3,
+                        "location": 0.15,
+                        "career": 0.15,
+                        "campus": 0.05
+                    }
+                }
+        except Exception as e:
+            flash(f"Error loading profile: {str(e)}", "error")
+            print(f"Profile load error: {e}")
+    
+    return render_template('profile.html', edit_profile=edit_profile)
 
 @app.route('/recommendations')
 def recommendations():
@@ -390,8 +533,21 @@ def university_detail(uni_id):
 @app.route('/compare', methods=['GET', 'POST'])
 def compare():
     """Compare multiple universities"""
+    # Check if user has viewed recommendations first
     if 'recommendations' not in session:
-        return redirect(url_for('recommendations'))
+        # Initialize recommendations if not in session
+        try:
+            user_profile = get_user_profile()
+            matcher = UniversityMatcher(db)
+            recommendations = matcher.get_recommendations(user_profile, top_n=100)
+            session['recommendations'] = recommendations
+        except Exception as e:
+            print(f"Error getting recommendations: {e}")
+            flash("Please complete your profile first to get personalized university recommendations.", "error")
+            return redirect(url_for('profile'))
+    
+    # Get user profile for customized comparison
+    user_profile = get_user_profile()
     
     if request.method == 'POST':
         # Get selected university IDs
@@ -411,15 +567,22 @@ def compare():
             if uni['id'] in selected_ids:
                 selected_unis.append(uni)
         
-        # Generate comparison chart
-        img_str = generate_comparison_chart(selected_unis)
+        # Generate comparison chart with user profile info
+        img_str = generate_comparison_chart(selected_unis, user_profile)
+        
+        # Generate personalized insights based on user profile
+        insights = generate_personalized_insights(selected_unis, user_profile)
         
         return render_template('comparison_results.html', 
                                universities=selected_unis, 
-                               comparison_chart=img_str)
+                               comparison_chart=img_str,
+                               user_profile=user_profile,
+                               insights=insights)
     
     # For GET request, show the selection form
-    return render_template('compare.html', recommendations=session['recommendations'])
+    return render_template('compare.html', 
+                          recommendations=session['recommendations'],
+                          user_profile=user_profile)
 
 @app.route('/api_settings', methods=['GET', 'POST'])
 @login_required
@@ -783,243 +946,316 @@ def analyze_time_trends(time_results):
         "recommendations": recommendations
     }
 
-def generate_radar_chart(university):
-    """Generate a radar chart for a university and return as base64 string"""
-    # Define dimensions
-    dimensions = [
-        ("Academic", 0.35),
-        ("Financial", 0.30),
-        ("Location", 0.15),
-        ("Career", 0.15),
-        ("Campus", 0.05)
+def generate_radar_chart(university, user_profile=None):
+    """Generate a radar chart for a university"""
+    # Create a figure and axis
+    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+    
+    # Define the categories and values
+    categories = [
+        'Academic', 'Financial', 
+        'Location', 'Career', 
+        'Campus Life'
     ]
     
-    # Create scores (similar to the original visualizer)
-    scores = [
-        min(university["academic_rank"] / 10, 1.0) * 100,
-        max(0, 1 - university["tuition_fee"] / 60000) * 100,
-        70,  # Location score (dummy)
-        university["job_placement"],
-        university["diversity_score"] * 100
+    # Get component scores, ensuring they are between 0 and 1
+    values = [
+        min(1.0, max(0.0, university.get('component_academic_score', 0.0))),
+        min(1.0, max(0.0, university.get('component_financial_score', 0.0))),
+        min(1.0, max(0.0, university.get('component_location_score', 0.0))),
+        min(1.0, max(0.0, university.get('component_career_score', 0.0))),
+        min(1.0, max(0.0, university.get('component_campus_score', 0.0)))
     ]
     
-    # Create radar chart
-    labels = [dim[0] for dim in dimensions]
-    angles = np.linspace(0, 2*np.pi, len(labels), endpoint=False).tolist()
+    # Number of categories
+    N = len(categories)
+    
+    # Set the angle for each category
+    angles = [n / float(N) * 2 * np.pi for n in range(N)]
     angles += angles[:1]  # Close the loop
     
-    scores = scores + scores[:1]  # Close the loop
+    # Adjust values to plot
+    values += values[:1]  # Close the loop
     
-    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
-    ax.plot(angles, scores, 'o-', linewidth=2)
-    ax.fill(angles, scores, alpha=0.25)
-    ax.set_thetagrids(np.degrees(angles[:-1]), labels)
-    ax.set_ylim(0, 100)
-    ax.grid(True)
+    # Draw the chart
+    ax.plot(angles, values, linewidth=2, linestyle='solid', label=university['name'])
+    ax.fill(angles, values, alpha=0.25)
     
-    plt.title(f"Match Profile: {university['name']}")
+    # Set category labels
+    plt.xticks(angles[:-1], categories, size=12)
     
-    # Save to BytesIO object
-    img = BytesIO()
-    plt.savefig(img, format='png')
-    plt.close()
-    img.seek(0)
+    # Draw y-axis labels
+    ax.set_rlabel_position(0)
+    plt.yticks([0.2, 0.4, 0.6, 0.8, 1.0], ["20%", "40%", "60%", "80%", "100%"], color="grey", size=10)
+    plt.ylim(0, 1)
     
-    # Convert to base64 for embedding in HTML
-    img_str = base64.b64encode(img.getvalue()).decode('utf-8')
+    # Add title with user profile context if available
+    if user_profile:
+        plt.title(f"Match Profile for {university['name']}\nBased on Your Academic Profile", size=15, y=1.1)
+    else:
+        plt.title(f"Match Profile for {university['name']}", size=15, y=1.1)
+    
+    # Add legend
+    plt.legend(loc='upper right')
+    
+    # Save to a Base64 string
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', bbox_inches='tight')
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
+    
+    # Encode to base64
+    img_str = "data:image/png;base64,"
+    img_str += base64.b64encode(image_png).decode('utf-8')
+    
+    # Close the figure to free memory
+    plt.close(fig)
     
     return img_str
 
-def generate_comparison_chart(universities):
-    """Generate an advanced multi-faceted comparison of universities"""
-    if not universities or len(universities) < 2:
-        return None
+def generate_comparison_chart(universities, user_profile=None):
+    """Generate a radar chart for multiple universities"""
+    # Create a figure and axis
+    fig, ax = plt.subplots(figsize=(10, 10), subplot_kw=dict(polar=True))
     
-    # Create a figure with multiple subplots for different visualization types
-    fig = plt.figure(figsize=(16, 12))
-    gs = fig.add_gridspec(2, 2, height_ratios=[1, 1.2])
-    
-    # 1. Radar chart for holistic comparison
-    ax_radar = fig.add_subplot(gs[0, :], polar=True)
-    
-    # Key metrics to compare in radar chart (normalized where higher is better)
-    radar_metrics = [
-        {"name": "Academic Strength", "key": lambda u: 1 - min(u["academic_rank"], 50) / 50},
-        {"name": "Affordability", "key": lambda u: 1 - min(u["tuition_fee"], 60000) / 60000},
-        {"name": "Selectivity", "key": lambda u: 1 - u.get("accurate_acceptance_rate", u["acceptance_rate"]) / 100},
-        {"name": "Career Prospects", "key": lambda u: u["job_placement"] / 100},
-        {"name": "Scholarship", "key": lambda u: u["scholarship_percent"] / 100},
-        {"name": "Diversity", "key": lambda u: u["diversity_score"]}
+    # Define the categories
+    categories = [
+        'Academic', 'Financial', 
+        'Location', 'Career', 
+        'Campus Life'
     ]
     
-    # Compute angles for radar chart
-    angles = np.linspace(0, 2*np.pi, len(radar_metrics), endpoint=False).tolist()
+    # Number of categories
+    N = len(categories)
     
-    # Close the radar plot (connect last point to first)
-    angles += angles[:1]
+    # Set the angle for each category
+    angles = [n / float(N) * 2 * np.pi for n in range(N)]
+    angles += angles[:1]  # Close the loop
     
-    # Plot each university on the radar chart
-    labels = [metric["name"] for metric in radar_metrics]
-    ax_radar.set_theta_offset(np.pi / 2)
-    ax_radar.set_theta_direction(-1)
-    ax_radar.set_thetagrids(np.degrees(angles[:-1]), labels)
+    # Colors for each university
+    colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd']
     
-    # Custom colors for each university
-    colors = plt.cm.tab10(np.linspace(0, 1, len(universities)))
-    
-    for i, uni in enumerate(universities):
-        values = [metric["key"](uni) for metric in radar_metrics]
-        values += values[:1]  # Close the polygon
+    # Draw each university
+    for i, university in enumerate(universities):
+        # Get component scores, ensuring they are between 0 and 1
+        values = [
+            min(1.0, max(0.0, university.get('component_academic_score', 0.0))),
+            min(1.0, max(0.0, university.get('component_financial_score', 0.0))),
+            min(1.0, max(0.0, university.get('component_location_score', 0.0))),
+            min(1.0, max(0.0, university.get('component_career_score', 0.0))),
+            min(1.0, max(0.0, university.get('component_campus_score', 0.0)))
+        ]
         
-        # Plot the university's profile
-        ax_radar.plot(angles, values, 'o-', linewidth=2, color=colors[i], label=uni["name"])
-        ax_radar.fill(angles, values, alpha=0.1, color=colors[i])
+        # Close the loop
+        values += values[:1]
+        
+        # Draw the chart for this university
+        color = colors[i % len(colors)]
+        ax.plot(angles, values, linewidth=2, linestyle='solid', color=color, label=university['name'])
+        ax.fill(angles, values, color=color, alpha=0.1)
     
-    ax_radar.set_ylim(0, 1)
-    ax_radar.set_title("Multidimensional University Profile Comparison", fontsize=14, pad=20)
-    ax_radar.legend(loc="upper right", bbox_to_anchor=(0.1, 0.1))
+    # Set category labels
+    plt.xticks(angles[:-1], categories, size=12)
     
-    # 2. Bar chart comparing key numeric metrics
-    ax_bar = fig.add_subplot(gs[1, 0])
+    # Draw y-axis labels
+    ax.set_rlabel_position(0)
+    plt.yticks([0.2, 0.4, 0.6, 0.8, 1.0], ["20%", "40%", "60%", "80%", "100%"], color="grey", size=10)
+    plt.ylim(0, 1)
     
-    # Metrics for bar chart with direct values (not normalized)
-    bar_metrics = [
-        {"name": "Match Score (%)", "key": "match_score"},
-        {"name": "Academic Rank", "key": "academic_rank", "lower_better": True},
-        {"name": "Tuition ($K)", "key": lambda u: u["tuition_fee"] / 1000},
-        {"name": "Accept. Rate (%)", "key": lambda u: u.get("accurate_acceptance_rate", u["acceptance_rate"])}
-    ]
-    
-    # Set up positions for grouped bars
-    bar_width = 0.8 / len(universities)
-    x = np.arange(len(bar_metrics))
-    
-    for i, uni in enumerate(universities):
-        # Extract values for each metric
-        values = []
-        for metric in bar_metrics:
-            if isinstance(metric.get("key"), str):
-                val = uni[metric["key"]]
+    # Add title with user profile context if available
+    if user_profile:
+        plt.title(f"University Comparison\nBased on Your Academic Profile (GPA: {user_profile['gpa']}, SAT: {user_profile['sat_score']})", 
+                 size=15, y=1.1)
             else:
-                val = metric["key"](uni)
-            # Invert values where lower is better
-            if metric.get("lower_better", False):
-                # Use a transformation that preserves relative differences
-                max_possible = 50  # For ranks, assume 50 is max we care about
-                val = max_possible - min(val, max_possible)
-            values.append(val)
-        
-        # Plot bars for this university
-        ax_bar.bar(x + i * bar_width, values, bar_width, color=colors[i], label=uni["name"])
+        plt.title("University Comparison", size=15, y=1.1)
     
-    # Customize bar chart
-    ax_bar.set_xticks(x + bar_width * (len(universities) - 1) / 2)
-    ax_bar.set_xticklabels([m["name"] for m in bar_metrics])
-    ax_bar.set_title("Key Metrics Comparison", fontsize=14)
-    ax_bar.set_ylabel("Value")
+    # Add legend
+    plt.legend(loc='upper right', bbox_to_anchor=(1.3, 1.1))
     
-    # 3. Table with actual values and statistical comparison
-    ax_table = fig.add_subplot(gs[1, 1])
-    ax_table.axis('tight')
-    ax_table.axis('off')
+    # Create a separate table to compare numerical values
+    table_data = []
+    headers = ["University", "Academic Rank", "Tuition", "Acceptance Rate", "Aid %", "Job Rate", "Major Match"]
     
-    # Prepare table data with improved formatting
-    table_metrics = [
-        {"name": "University", "key": "name", "format": "{}"},
-        {"name": "Match\nScore", "key": "match_score", "format": "{:.1f}%"},
-        {"name": "Rank", "key": "academic_rank", "format": "#{:d}"},
-        {"name": "Tuition", "key": "tuition_fee", "format": "${:,}"},
-        {"name": "Accept.\nRate", "key": lambda u: u.get("accurate_acceptance_rate", u["acceptance_rate"]), "format": "{:.1f}%"},
-        {"name": "Scholar-\nship", "key": "scholarship_percent", "format": "{:.0f}%"},
-        {"name": "Job\nPlace", "key": "job_placement", "format": "{:.0f}%"},
-        {"name": "Environment", "key": "environment", "format": "{}"}
-    ]
-    
-    # Headers for the table
-    table_data = [[metric["name"] for metric in table_metrics]]
-    
-    # Add data for each university
     for uni in universities:
-        row = []
-        for metric in table_metrics:
-            if isinstance(metric.get("key"), str):
-                val = uni[metric["key"]]
-            else:
-                val = metric["key"](uni)
-            row.append(metric["format"].format(val))
+        # Calculate major match score if user profile has preferred majors
+        major_match = "N/A"
+        if user_profile and 'preferred_majors' in user_profile and user_profile['preferred_majors']:
+            uni_majors = uni.get('major_strengths', '').lower().split(',')
+            user_majors = [m.lower() for m in user_profile['preferred_majors']]
+            matches = sum(1 for um in user_majors if any(um in unm for unm in uni_majors))
+            total = len(user_majors) if user_majors else 1
+            major_match = f"{int((matches/total)*100)}%"
+        
+        row = [
+            uni['name'],
+            f"#{uni.get('academic_rank', 'N/A')}",
+            f"${uni.get('tuition_fee', 0):,}",
+            f"{uni.get('acceptance_rate', 0):.1f}%",
+            f"{uni.get('scholarship_percentage', 0):.1f}%",
+            f"{uni.get('job_placement_rate', 0):.1f}%",
+            major_match
+        ]
         table_data.append(row)
     
-    # Create the table with improved styling
+    # Create a table below the chart
+    ax_table = fig.add_axes([0.1, 0.0, 0.8, 0.2])
+    ax_table.axis('tight')
+    ax_table.axis('off')
     table = ax_table.table(
         cellText=table_data, 
+        colLabels=headers,
         loc='center', 
-        cellLoc='center',
-        colWidths=[0.2, 0.1, 0.08, 0.12, 0.1, 0.1, 0.1, 0.2]  # Custom column widths
+        cellLoc='center'
     )
-    
-    # Set better styling
     table.auto_set_font_size(False)
     table.set_fontsize(10)
-    table.scale(1, 1.8)  # Taller rows for better readability
+    table.scale(1, 1.5)
     
-    # Apply better styling to all cells
-    for i in range(len(table_data)):
-        for j in range(len(table_metrics)):
-            # Add borders to all cells
-            table[(i, j)].set_edgecolor('#cccccc')
-            
-            # Header row styling
-            if i == 0:
-                table[(i, j)].set_facecolor('#2c3e50')  # Darker blue
-                table[(i, j)].set_text_props(color='white', fontweight='bold')
-            # Data row styling - alternate row colors
-            elif i % 2 == 0:
-                table[(i, j)].set_facecolor('#f8f9fa')  # Light gray for even rows
-            else:
-                table[(i, j)].set_facecolor('#ffffff')  # White for odd rows
+    # Add some more space for the table
+    plt.subplots_adjust(bottom=0.3)
     
-    # Apply conditional formatting to highlight best values
-    for j in range(1, len(table_metrics)):
-        metric = table_metrics[j]
-        is_lower_better = j == 2  # Only academic rank is better when lower
-        
-        # Find best value for this metric
-        best_idx = None
-        best_val = None
-        
-        for i, uni in enumerate(universities):
-            if isinstance(metric.get("key"), str):
-                val = uni[metric["key"]]
-            else:
-                val = metric["key"](uni)
-                
-            if best_val is None or (is_lower_better and val < best_val) or (not is_lower_better and val > best_val):
-                best_val = val
-                best_idx = i
-        
-        # Highlight the best value
-        if best_idx is not None:
-            table[(best_idx + 1, j)].set_facecolor('#d4edda')  # Light green
-            table[(best_idx + 1, j)].set_text_props(weight='bold')
+    # Save to a Base64 string
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', bbox_inches='tight')
+    buffer.seek(0)
+    image_png = buffer.getvalue()
+    buffer.close()
     
-    ax_table.set_title("Detailed Comparison Table", fontsize=14, pad=15)
+    # Encode to base64
+    img_str = "data:image/png;base64,"
+    img_str += base64.b64encode(image_png).decode('utf-8')
     
-    # Add a summary of the comparison at the top
-    plt.suptitle("Advanced University Comparison", fontsize=16, y=0.98)
-    
-    # Adjust layout
-    plt.tight_layout(rect=[0, 0, 1, 0.96])
-    
-    # Save chart to BytesIO
-    img = BytesIO()
-    plt.savefig(img, format='png', dpi=120, bbox_inches='tight')
+    # Close the figure to free memory
     plt.close(fig)
-    img.seek(0)
-    
-    # Convert to base64 for embedding in HTML
-    img_str = base64.b64encode(img.getvalue()).decode('utf-8')
     
     return img_str
+
+def generate_personalized_insights(universities, user_profile):
+    """Generate personalized insights based on user profile for each university"""
+    insights = {}
+    
+    for uni in universities:
+        uni_insights = []
+        
+        # Check major match
+        if 'preferred_majors' in user_profile and user_profile['preferred_majors']:
+            uni_majors = uni.get('major_strengths', '').lower().split(',')
+            user_majors = [m.lower() for m in user_profile['preferred_majors']]
+            matching_majors = [m for m in user_majors if any(m in unm for unm in uni_majors)]
+            
+            if matching_majors:
+                uni_insights.append({
+                    'type': 'positive',
+                    'category': 'academic',
+                    'text': f"Offers your preferred major(s): {', '.join(matching_majors)}"
+                })
+            else:
+                uni_insights.append({
+                    'type': 'negative',
+                    'category': 'academic',
+                    'text': "Doesn't directly offer your preferred majors"
+                })
+        
+        # Check financial fit
+        if 'budget' in user_profile and user_profile['budget']:
+            tuition = uni.get('tuition_fee', 0)
+            aid_percent = uni.get('scholarship_percentage', 0)
+            est_cost = tuition * (1 - (aid_percent / 100))
+            
+            if est_cost <= user_profile['budget']:
+                uni_insights.append({
+                    'type': 'positive',
+                    'category': 'financial',
+                    'text': f"Affordable with your budget (Est. cost: ${est_cost:,.0f})"
+                })
+            elif est_cost <= user_profile['budget'] * 1.2:
+                uni_insights.append({
+                    'type': 'neutral',
+                    'category': 'financial',
+                    'text': f"Slightly over your budget (Est. cost: ${est_cost:,.0f})"
+                })
+            else:
+                uni_insights.append({
+                    'type': 'negative',
+                    'category': 'financial',
+                    'text': f"Significantly exceeds your budget (Est. cost: ${est_cost:,.0f})"
+                })
+        
+        # Check location preference
+        if 'preferred_locations' in user_profile and user_profile['preferred_locations']:
+            uni_location = uni.get('location', '').lower()
+            uni_region = uni.get('region', '').lower()
+            preferred_locations = [loc.lower() for loc in user_profile['preferred_locations']]
+            
+            if any(loc in uni_location or loc in uni_region for loc in preferred_locations):
+                uni_insights.append({
+                    'type': 'positive',
+                    'category': 'location',
+                    'text': f"Located in your preferred region: {uni.get('location', '')}"
+                })
+        
+        # Check campus environment
+        if 'preferred_environment' in user_profile and user_profile['preferred_environment']:
+            uni_environment = uni.get('environment', '')
+            
+            if uni_environment.lower() == user_profile['preferred_environment'].lower():
+                uni_insights.append({
+                    'type': 'positive',
+                    'category': 'campus',
+                    'text': f"Matches your preferred {uni_environment} campus environment"
+                })
+        
+        # Check academic competitiveness
+        if 'gpa' in user_profile and 'sat_score' in user_profile:
+            user_gpa = user_profile['gpa']
+            user_sat = user_profile['sat_score']
+            acceptance_rate = uni.get('acceptance_rate', 50)
+            
+            # Simplified academic competitiveness check
+            if acceptance_rate < 10:
+                if user_gpa >= 3.9 and user_sat >= 1500:
+                    uni_insights.append({
+                        'type': 'neutral',
+                        'category': 'academic',
+                        'text': "Highly competitive, but your academic stats are strong"
+                    })
+                else:
+                    uni_insights.append({
+                        'type': 'negative',
+                        'category': 'academic',
+                        'text': "Very competitive admission - consider as a reach school"
+                    })
+            elif acceptance_rate < 30:
+                if user_gpa >= 3.7 and user_sat >= 1400:
+                    uni_insights.append({
+                        'type': 'positive',
+                        'category': 'academic',
+                        'text': "Your academic profile is competitive for this university"
+                    })
+                else:
+                    uni_insights.append({
+                        'type': 'neutral',
+                        'category': 'academic',
+                        'text': "Moderately competitive - consider as a target/reach school"
+                    })
+            else:
+                if user_gpa >= 3.0 and user_sat >= 1200:
+                    uni_insights.append({
+                        'type': 'positive',
+                        'category': 'academic',
+                        'text': "Your academic profile is well above average for this school"
+                    })
+                else:
+                    uni_insights.append({
+                        'type': 'neutral',
+                        'category': 'academic',
+                        'text': "Your profile suggests this could be a good target school"
+                    })
+        
+        insights[uni['id']] = uni_insights
+    
+    return insights
 
 if __name__ == '__main__':
     app.run(debug=True, threaded=True) 

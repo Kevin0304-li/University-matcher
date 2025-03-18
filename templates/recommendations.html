@@ -282,100 +282,93 @@
     {% if recommendations %}
       {% for university in recommendations %}
         <div class="column is-half-tablet is-one-third-desktop">
-          <div class="card university-card">
-            <div class="card-content">
-              <div class="match-score-container">
-                <div class="match-score-circle" data-score="{{ university.match_score }}">
-                  <span>{{ "%.1f"|format(university.match_score) }}%</span>
+          <div class="university-card">
+            <div class="university-card-header">
+              <div class="match-score">
+                <div class="score-circle">
+                  <span>{{ '%.1f'|format(university.match_score) }}%</span>
                 </div>
               </div>
-              
-              <p class="title is-4">{{ university.name }}</p>
-              <p class="subtitle is-6">{{ university.location }}</p>
-              
-              <div class="content">
-                <div class="university-stats">
-                  <div class="stat-item">
-                    <span class="stat-label">Rank:</span>
-                    <span class="stat-value">#{{ university.academic_rank }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">Acceptance:</span>
-                    <span class="stat-value">{{ university.accurate_acceptance_rate|default(university.acceptance_rate) }}%</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">Tuition:</span>
-                    <span class="stat-value">${{ "{:,}".format(university.tuition_fee) }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">Environment:</span>
-                    <span class="stat-value">{{ university.environment }}</span>
-                  </div>
-                  <div class="stat-item">
-                    <span class="stat-label">Job Placement:</span>
-                    <span class="stat-value">{{ university.job_placement }}%</span>
-                  </div>
+              <div class="university-info">
+                <h3>{{ university.name }}</h3>
+                <p>{{ university.location }}</p>
+              </div>
+            </div>
+            
+            <!-- University details -->
+            <div class="university-card-details">
+              <div class="details-row">
+                <div class="detail-item">
+                  <span class="detail-label">Acceptance Rate</span>
+                  <span class="detail-value">{{ university.accurate_acceptance_rate|round|int if university.accurate_acceptance_rate else (university.acceptance_rate|round|int if university.acceptance_rate else 'N/A') }}%</span>
                 </div>
-                
-                {% if university.component_scores %}
-                <div class="match-breakdown">
-                  <p class="has-text-weight-bold mb-2">Match Breakdown:</p>
-                  <div class="component-bars">
-                    <div class="component-bar-item">
-                      <div class="component-label">Academic</div>
-                      <div class="component-bar-container">
-                        <div class="component-bar academic-bar" style="width: {{ university.component_scores.academic }}%"></div>
-                      </div>
-                      <div class="component-value">{{ university.component_scores.academic }}%</div>
-                    </div>
-                    <div class="component-bar-item">
-                      <div class="component-label">Financial</div>
-                      <div class="component-bar-container">
-                        <div class="component-bar financial-bar" style="width: {{ university.component_scores.financial }}%"></div>
-                      </div>
-                      <div class="component-value">{{ university.component_scores.financial }}%</div>
-                    </div>
-                    <div class="component-bar-item">
-                      <div class="component-label">Location</div>
-                      <div class="component-bar-container">
-                        <div class="component-bar location-bar" style="width: {{ university.component_scores.location }}%"></div>
-                      </div>
-                      <div class="component-value">{{ university.component_scores.location }}%</div>
-                    </div>
-                    <div class="component-bar-item">
-                      <div class="component-label">Career</div>
-                      <div class="component-bar-container">
-                        <div class="component-bar career-bar" style="width: {{ university.component_scores.career }}%"></div>
-                      </div>
-                      <div class="component-value">{{ university.component_scores.career }}%</div>
-                    </div>
-                    <div class="component-bar-item">
-                      <div class="component-label">Campus</div>
-                      <div class="component-bar-container">
-                        <div class="component-bar campus-bar" style="width: {{ university.component_scores.campus }}%"></div>
-                      </div>
-                      <div class="component-value">{{ university.component_scores.campus }}%</div>
-                    </div>
-                  </div>
+                <div class="detail-item">
+                  <span class="detail-label">Tuition</span>
+                  <span class="detail-value">${{ university.tuition_fee|round(0)|int|format_number if university.tuition_fee else 'N/A' }}</span>
                 </div>
-                {% endif %}
-                
-                <div class="major-strengths">
-                  <p class="has-text-weight-bold">Key Strengths:</p>
-                  <div class="tags">
-                    {% for major in university.major_strengths.split(',') %}
-                      <span class="tag is-info is-light">{{ major }}</span>
-                    {% endfor %}
-                  </div>
+              </div>
+              <div class="details-row">
+                <div class="detail-item">
+                  <span class="detail-label">Academic Rank</span>
+                  <span class="detail-value">{{ university.academic_rank|int if university.academic_rank else 'N/A' }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Environment</span>
+                  <span class="detail-value">{{ university.environment if university.environment else 'N/A' }}</span>
                 </div>
               </div>
             </div>
-            <footer class="card-footer">
-              <a href="{{ url_for('university_detail', uni_id=university.id) }}" class="card-footer-item">Details</a>
+            
+            <!-- Component scores if available -->
+            {% if university.component_scores %}
+            <div class="component-scores">
+              <div class="score-row">
+                <div class="component-score">
+                  <span class="score-label">Academic</span>
+                  <div class="score-bar">
+                    <div class="score-fill" style="width: {{ university.component_scores.academic }}%"></div>
+                  </div>
+                  <span class="score-value">{{ '%.1f'|format(university.component_scores.academic) }}%</span>
+                </div>
+              </div>
+              <div class="score-row">
+                <div class="component-score">
+                  <span class="score-label">Financial</span>
+                  <div class="score-bar">
+                    <div class="score-fill" style="width: {{ university.component_scores.financial }}%"></div>
+                  </div>
+                  <span class="score-value">{{ '%.1f'|format(university.component_scores.financial) }}%</span>
+                </div>
+              </div>
+              <div class="score-row">
+                <div class="component-score">
+                  <span class="score-label">Location</span>
+                  <div class="score-bar">
+                    <div class="score-fill" style="width: {{ university.component_scores.location }}%"></div>
+                  </div>
+                  <span class="score-value">{{ '%.1f'|format(university.component_scores.location) }}%</span>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            
+            <div class="university-card-actions">
+              <a href="{{ url_for('university_detail', uni_id=university.id) }}" class="button is-primary">
+                <span class="icon">
+                  <i class="fas fa-info-circle"></i>
+                </span>
+                <span>Details</span>
+              </a>
+              
               {% if session.get('user_id') %}
-                <a href="#" class="card-footer-item js-save-university" data-university-id="{{ university.id }}">Save</a>
+                <button class="button is-success save-university" data-id="{{ university.id }}">
+                  <span class="icon">
+                    <i class="fas fa-bookmark"></i>
+                  </span>
+                  <span>Save</span>
+                </button>
               {% endif %}
-            </footer>
+            </div>
           </div>
         </div>
       {% endfor %}

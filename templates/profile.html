@@ -12,888 +12,920 @@
 {% endblock %}
 
 {% block content %}
-<div class="container" data-aos="fade-up" data-aos-delay="200">
-    <div class="card profile-card">
-        <div class="profile-progress-bar">
-            <div class="progress-indicator" id="progress-indicator"></div>
+<div class="container">
+  <div class="box">
+    <h1 class="title is-3">{{ "Edit Your Profile" if edit_profile else "Create Your Academic Profile" }}</h1>
+    <p class="subtitle is-6">{{ "Update your information to find better university matches" if edit_profile else "Tell us about yourself to find universities that match your profile" }}</p>
+    
+    <div class="progress-tracker">
+      <div class="progress-step" data-step="academics">
+        <span class="step-icon"><i class="fas fa-graduation-cap"></i></span>
+        <span class="step-name">Academics</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="interests">
+        <span class="step-icon"><i class="fas fa-book"></i></span>
+        <span class="step-name">Interests</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="preferences">
+        <span class="step-icon"><i class="fas fa-map-marker-alt"></i></span>
+        <span class="step-name">Preferences</span>
+      </div>
+      <div class="progress-line"></div>
+      <div class="progress-step" data-step="priorities">
+        <span class="step-icon"><i class="fas fa-balance-scale"></i></span>
+        <span class="step-name">Priorities</span>
+      </div>
+    </div>
+    
+    <form method="POST" action="{{ url_for('profile', edit_profile_id=edit_profile.id if edit_profile else None) }}">
+      <div class="form-section" id="section-academics">
+        <h2 class="subtitle is-4">Academic Information</h2>
+        <div class="field">
+          <label class="label">Profile Name</label>
+          <div class="control has-icons-left">
+            <input class="input" type="text" name="profile_name" placeholder="e.g. My College Application 2024" value="{{ edit_profile.profile_name if edit_profile else '' }}" required>
+            <span class="icon is-small is-left">
+              <i class="fas fa-user-graduate"></i>
+            </span>
+          </div>
+          <p class="help">Give your profile a name to easily identify it later</p>
         </div>
         
-        <div class="card-body">
-            {% if error %}
-            <div class="alert alert-error">
-                {{ error }}
+        <div class="columns">
+          <div class="column">
+            <div class="field">
+              <label class="label">GPA (0.0 - 4.0)</label>
+              <div class="control has-icons-left">
+                <input class="input" type="number" name="gpa" placeholder="e.g. 3.7" min="0" max="4.0" step="0.1" value="{{ edit_profile.gpa if edit_profile else '' }}" required>
+                <span class="icon is-small is-left">
+                  <i class="fas fa-chart-line"></i>
+                </span>
+              </div>
+              <div class="gpa-scale">
+                <div class="scale-item" data-range="3.7-4.0">A</div>
+                <div class="scale-item" data-range="3.0-3.7">B</div>
+                <div class="scale-item" data-range="2.0-3.0">C</div>
+                <div class="scale-item" data-range="1.0-2.0">D</div>
+                <div class="scale-item" data-range="0.0-1.0">F</div>
+              </div>
+              <p class="help">Your cumulative high school or college GPA</p>
             </div>
-            {% endif %}
+            </div>
             
-            <form action="{{ url_for('profile') }}" method="post" data-validate id="profile-form">
-                <div class="form-section" id="section-1">
-                    <div class="section-header">
-                        <div class="section-icon"><i class="fas fa-graduation-cap"></i></div>
-                        <h3>Academic Information</h3>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="gpa">GPA (on a 4.0 scale)</label>
-                        <input type="number" id="gpa" name="gpa" step="0.01" min="0" max="4.0" required>
-                        <div class="form-feedback" id="gpa-feedback"></div>
-                        <div class="gpa-visualization">
-                            <div class="gpa-bar" id="gpa-bar"></div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="sat_score">SAT Score (out of 1600)</label>
-                        <input type="number" id="sat_score" name="sat_score" min="400" max="1600" required>
-                        <div class="form-feedback" id="sat-feedback"></div>
-                        <div class="sat-visualization">
-                            <div class="sat-marker" id="sat-marker"></div>
-                            <div class="sat-scale">
-                                <span>400</span>
-                                <span>800</span>
-                                <span>1200</span>
-                                <span>1600</span>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="majors">Majors of Interest</label>
-                        <div class="input-with-suggestions">
-                            <input type="text" id="majors-input" placeholder="Type a major and press Enter">
-                            <input type="hidden" id="majors" name="majors" required>
-                            <div id="major-suggestions" class="suggestions-dropdown"></div>
-                        </div>
-                        <div id="majors-tags" class="tags-container"></div>
-                    </div>
-                    
-                    <div class="form-actions section-nav">
-                        <button type="button" class="btn btn-primary next-btn" data-next="2">Continue <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
-                
-                <div class="form-section hidden" id="section-2">
-                    <div class="section-header">
-                        <div class="section-icon"><i class="fas fa-dollar-sign"></i></div>
-                        <h3>Financial Information</h3>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="budget">Annual Budget for Tuition (USD)</label>
-                        <input type="number" id="budget" name="budget" min="1000" required>
-                        <div class="budget-indicator">
-                            <div id="budget-level"></div>
-                        </div>
-                        <div class="budget-labels">
-                            <span>$1,000</span>
-                            <span>$25,000</span>
-                            <span>$50,000+</span>
-                        </div>
-                        <div class="budget-feedback" id="budget-feedback"></div>
-                    </div>
-                    
-                    <div class="form-actions section-nav">
-                        <button type="button" class="btn btn-outline back-btn" data-prev="1"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn btn-primary next-btn" data-next="3">Continue <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
-                
-                <div class="form-section hidden" id="section-3">
-                    <div class="section-header">
-                        <div class="section-icon"><i class="fas fa-map-marker-alt"></i></div>
-                        <h3>Location Preferences</h3>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="locations">Preferred Locations</label>
-                        <div class="input-with-suggestions">
-                            <input type="text" id="locations-input" placeholder="Type a location and press Enter">
-                            <input type="hidden" id="locations" name="locations">
-                            <div id="location-suggestions" class="suggestions-dropdown"></div>
-                        </div>
-                        <div id="locations-tags" class="tags-container"></div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label for="environment">Preferred Environment</label>
-                        <div class="environment-selector">
-                            <div class="environment-option" data-value="Urban">
-                                <div class="env-icon"><i class="fas fa-city"></i></div>
-                                <span>Urban</span>
-                            </div>
-                            <div class="environment-option" data-value="Suburban">
-                                <div class="env-icon"><i class="fas fa-home"></i></div>
-                                <span>Suburban</span>
-                            </div>
-                            <div class="environment-option" data-value="Rural">
-                                <div class="env-icon"><i class="fas fa-tree"></i></div>
-                                <span>Rural</span>
-                            </div>
-                            <div class="environment-option" data-value="College town">
-                                <div class="env-icon"><i class="fas fa-university"></i></div>
-                                <span>College town</span>
-                            </div>
-                        </div>
-                        <input type="hidden" id="environment" name="environment" required>
-                    </div>
-                    
-                    <div class="form-actions section-nav">
-                        <button type="button" class="btn btn-outline back-btn" data-prev="2"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="button" class="btn btn-primary next-btn" data-next="4">Continue <i class="fas fa-arrow-right"></i></button>
-                    </div>
-                </div>
-                
-                <div class="form-section hidden" id="section-4">
-                    <div class="section-header">
-                        <div class="section-icon"><i class="fas fa-balance-scale"></i></div>
-                        <h3>Importance Weights</h3>
-                    </div>
-                    <p>Rate the importance of each factor in your decision</p>
-                    
-                    <div class="form-group weight-slider">
-                        <label for="academic_weight">Academic Reputation <output for="academic_weight" class="weight-value">5</output></label>
-                        <input type="range" id="academic_weight" name="academic_weight" min="1" max="10" value="5" class="importance-slider">
-                        <div class="slider-labels">
-                            <span>Less Important</span>
-                            <span>Very Important</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group weight-slider">
-                        <label for="financial_weight">Affordability <output for="financial_weight" class="weight-value">5</output></label>
-                        <input type="range" id="financial_weight" name="financial_weight" min="1" max="10" value="5" class="importance-slider">
-                        <div class="slider-labels">
-                            <span>Less Important</span>
-                            <span>Very Important</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group weight-slider">
-                        <label for="location_weight">Location <output for="location_weight" class="weight-value">5</output></label>
-                        <input type="range" id="location_weight" name="location_weight" min="1" max="10" value="5" class="importance-slider">
-                        <div class="slider-labels">
-                            <span>Less Important</span>
-                            <span>Very Important</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group weight-slider">
-                        <label for="career_weight">Career Prospects <output for="career_weight" class="weight-value">5</output></label>
-                        <input type="range" id="career_weight" name="career_weight" min="1" max="10" value="5" class="importance-slider">
-                        <div class="slider-labels">
-                            <span>Less Important</span>
-                            <span>Very Important</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group weight-slider">
-                        <label for="campus_weight">Campus Culture <output for="campus_weight" class="weight-value">5</output></label>
-                        <input type="range" id="campus_weight" name="campus_weight" min="1" max="10" value="5" class="importance-slider">
-                        <div class="slider-labels">
-                            <span>Less Important</span>
-                            <span>Very Important</span>
-                        </div>
-                    </div>
-                    
-                    <div class="form-actions section-nav">
-                        <button type="button" class="btn btn-outline back-btn" data-prev="3"><i class="fas fa-arrow-left"></i> Back</button>
-                        <button type="submit" class="btn btn-lg btn-primary">
-                            <i class="fas fa-search"></i> Find My Matches
-                        </button>
-                    </div>
-                </div>
-            </form>
+          <div class="column">
+            <div class="field">
+              <label class="label">SAT Score (400 - 1600)</label>
+              <div class="control has-icons-left">
+                <input class="input" type="number" name="sat_score" placeholder="e.g. 1350" min="400" max="1600" step="10" value="{{ edit_profile.sat_score if edit_profile else '' }}" required>
+                <span class="icon is-small is-left">
+                  <i class="fas fa-file-alt"></i>
+                </span>
+              </div>
+              <div class="sat-scale">
+                <div class="scale-item" data-range="1400-1600">Excellent</div>
+                <div class="scale-item" data-range="1200-1400">Strong</div>
+                <div class="scale-item" data-range="1000-1200">Average</div>
+                <div class="scale-item" data-range="800-1000">Below Avg</div>
+                <div class="scale-item" data-range="400-800">Low</div>
+              </div>
+              <p class="help">Your combined SAT score (or converted ACT)</p>
+            </div>
+          </div>
         </div>
+        
+        <div class="field">
+          <button type="button" class="button is-primary next-button" data-next="interests">
+            <span>Next: Interests</span>
+            <span class="icon">
+              <i class="fas fa-arrow-right"></i>
+            </span>
+          </button>
+        </div>
+      </div>
+      
+      <div class="form-section is-hidden" id="section-interests">
+        <h2 class="subtitle is-4">Academic Interests</h2>
+        <div class="field">
+          <label class="label">Preferred Majors</label>
+          <div class="control">
+            <div class="major-selection">
+              <div class="field has-addons">
+                <div class="control is-expanded">
+                  <div class="select is-fullwidth">
+                    <select id="major-dropdown">
+                      <option value="">Select a major...</option>
+                      <option value="Computer Science">Computer Science</option>
+                      <option value="Business">Business</option>
+                      <option value="Engineering">Engineering</option>
+                      <option value="Biology">Biology</option>
+                      <option value="Psychology">Psychology</option>
+                      <option value="Economics">Economics</option>
+                      <option value="English">English</option>
+                      <option value="Political Science">Political Science</option>
+                      <option value="Chemistry">Chemistry</option>
+                      <option value="Mathematics">Mathematics</option>
+                      <option value="Communications">Communications</option>
+                      <option value="History">History</option>
+                      <option value="Nursing">Nursing</option>
+                      <option value="Physics">Physics</option>
+                      <option value="Art">Art</option>
+                      <option value="Education">Education</option>
+                      <option value="Sociology">Sociology</option>
+                      <option value="Anthropology">Anthropology</option>
+                      <option value="Philosophy">Philosophy</option>
+                    </select>
+                  </div>
+                </div>
+                <div class="control">
+                  <button type="button" class="button is-info" id="add-major-btn">
+                    <span class="icon">
+                      <i class="fas fa-plus"></i>
+                    </span>
+                    <span>Add</span>
+                  </button>
+                </div>
+            </div>
+            
+              <div class="selected-majors tags mt-2" id="selected-majors">
+                {% if edit_profile and edit_profile.preferred_majors %}
+                  {% for major in edit_profile.preferred_majors %}
+                    <span class="tag is-info is-medium">
+                      {{ major }}
+                      <button type="button" class="delete is-small remove-major" data-major="{{ major }}"></button>
+                      <input type="hidden" name="preferred_majors" value="{{ major }}">
+                    </span>
+                  {% endfor %}
+                {% endif %}
+              </div>
+            </div>
+            <p class="help">Select up to 3 majors you're interested in studying</p>
+          </div>
+            </div>
+            
+        <div class="field">
+          <label class="label">Extracurricular Interests</label>
+          <div class="control">
+            <div class="extracurricular-selection">
+              <div class="columns is-multiline">
+                <div class="column is-one-third">
+                  <label class="checkbox">
+                    <input type="checkbox" name="extracurricular_interests" value="Sports" {{ 'checked' if edit_profile and 'Sports' in edit_profile.extracurricular_interests else '' }}>
+                    <span class="interest-checkbox">
+                      <i class="fas fa-basketball-ball"></i> Sports
+                    </span>
+                  </label>
+                </div>
+                <div class="column is-one-third">
+                  <label class="checkbox">
+                    <input type="checkbox" name="extracurricular_interests" value="Music" {{ 'checked' if edit_profile and 'Music' in edit_profile.extracurricular_interests else '' }}>
+                    <span class="interest-checkbox">
+                      <i class="fas fa-music"></i> Music
+                    </span>
+                  </label>
+                </div>
+                <div class="column is-one-third">
+                  <label class="checkbox">
+                    <input type="checkbox" name="extracurricular_interests" value="Art" {{ 'checked' if edit_profile and 'Art' in edit_profile.extracurricular_interests else '' }}>
+                    <span class="interest-checkbox">
+                      <i class="fas fa-palette"></i> Art
+                    </span>
+                  </label>
+                </div>
+                <div class="column is-one-third">
+                  <label class="checkbox">
+                    <input type="checkbox" name="extracurricular_interests" value="Student Government" {{ 'checked' if edit_profile and 'Student Government' in edit_profile.extracurricular_interests else '' }}>
+                    <span class="interest-checkbox">
+                      <i class="fas fa-users"></i> Student Government
+                    </span>
+                  </label>
+                </div>
+                <div class="column is-one-third">
+                  <label class="checkbox">
+                    <input type="checkbox" name="extracurricular_interests" value="Community Service" {{ 'checked' if edit_profile and 'Community Service' in edit_profile.extracurricular_interests else '' }}>
+                    <span class="interest-checkbox">
+                      <i class="fas fa-hands-helping"></i> Community Service
+                    </span>
+                  </label>
+                </div>
+                <div class="column is-one-third">
+                  <label class="checkbox">
+                    <input type="checkbox" name="extracurricular_interests" value="Research" {{ 'checked' if edit_profile and 'Research' in edit_profile.extracurricular_interests else '' }}>
+                    <span class="interest-checkbox">
+                      <i class="fas fa-flask"></i> Research
+                    </span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            <p class="help">Select activities you're interested in participating in during college</p>
+          </div>
+        </div>
+        
+        <div class="field is-grouped">
+          <div class="control">
+            <button type="button" class="button is-light back-button" data-prev="academics">
+              <span class="icon">
+                <i class="fas fa-arrow-left"></i>
+              </span>
+              <span>Back</span>
+            </button>
+          </div>
+          <div class="control">
+            <button type="button" class="button is-primary next-button" data-next="preferences">
+              <span>Next: Preferences</span>
+              <span class="icon">
+                <i class="fas fa-arrow-right"></i>
+              </span>
+            </button>
+          </div>
+                </div>
+            </div>
+            
+      <div class="form-section is-hidden" id="section-preferences">
+        <h2 class="subtitle is-4">Location & Financial Preferences</h2>
+        <div class="field">
+          <label class="label">Budget (Annual)</label>
+          <div class="control has-icons-left">
+            <input class="input" type="number" name="budget" placeholder="e.g. 30000" min="0" step="1000" value="{{ edit_profile.budget if edit_profile else '' }}" required>
+            <span class="icon is-small is-left">
+              <i class="fas fa-dollar-sign"></i>
+            </span>
+          </div>
+          <div class="budget-meter mt-2 mb-2">
+            <div class="meter-labels">
+              <span>Low Cost</span>
+              <span>Medium</span>
+              <span>High Cost</span>
+            </div>
+            <div class="meter-bar">
+              <div class="meter-fill"></div>
+            </div>
+            <div class="meter-markers">
+              <span class="marker" style="left:0%">$0</span>
+              <span class="marker" style="left:25%">$15k</span>
+              <span class="marker" style="left:50%">$30k</span>
+              <span class="marker" style="left:75%">$45k</span>
+              <span class="marker" style="left:100%">$60k+</span>
+            </div>
+          </div>
+          <p class="help">Your annual budget for tuition and fees</p>
+            </div>
+            
+        <div class="field">
+          <label class="label">Preferred Locations</label>
+          <div class="control">
+            <div class="location-selection">
+              <div class="us-map-container">
+                <div class="us-regions">
+                  <div class="region-item" data-region="Northeast">
+                    <input type="checkbox" name="preferred_locations" value="Northeast" {{ 'checked' if edit_profile and 'Northeast' in edit_profile.preferred_locations else '' }} class="region-checkbox">
+                    <span class="region-name">Northeast</span>
+                  </div>
+                  <div class="region-item" data-region="Southeast">
+                    <input type="checkbox" name="preferred_locations" value="Southeast" {{ 'checked' if edit_profile and 'Southeast' in edit_profile.preferred_locations else '' }} class="region-checkbox">
+                    <span class="region-name">Southeast</span>
+                  </div>
+                  <div class="region-item" data-region="Midwest">
+                    <input type="checkbox" name="preferred_locations" value="Midwest" {{ 'checked' if edit_profile and 'Midwest' in edit_profile.preferred_locations else '' }} class="region-checkbox">
+                    <span class="region-name">Midwest</span>
+                  </div>
+                  <div class="region-item" data-region="Southwest">
+                    <input type="checkbox" name="preferred_locations" value="Southwest" {{ 'checked' if edit_profile and 'Southwest' in edit_profile.preferred_locations else '' }} class="region-checkbox">
+                    <span class="region-name">Southwest</span>
+                  </div>
+                  <div class="region-item" data-region="West">
+                    <input type="checkbox" name="preferred_locations" value="West" {{ 'checked' if edit_profile and 'West' in edit_profile.preferred_locations else '' }} class="region-checkbox">
+                    <span class="region-name">West</span>
+                  </div>
+                </div>
+              </div>
+              <p class="help">Select regions where you'd like to attend university</p>
+            </div>
+                </div>
+            </div>
+            
+        <div class="field">
+          <label class="label">Preferred Environment</label>
+          <div class="control">
+            <div class="environment-selection">
+              <div class="columns is-mobile">
+                <div class="column">
+                  <label class="environment-option">
+                    <input type="radio" name="preferred_environment" value="Urban" {{ 'checked' if edit_profile and edit_profile.preferred_environment == 'Urban' else '' }}>
+                    <div class="environment-card">
+                      <span class="icon">
+                        <i class="fas fa-city"></i>
+                      </span>
+                      <span class="environment-name">Urban</span>
+                    </div>
+                  </label>
+                </div>
+                <div class="column">
+                  <label class="environment-option">
+                    <input type="radio" name="preferred_environment" value="Suburban" {{ 'checked' if edit_profile and edit_profile.preferred_environment == 'Suburban' else '' }}>
+                    <div class="environment-card">
+                      <span class="icon">
+                        <i class="fas fa-home"></i>
+                      </span>
+                      <span class="environment-name">Suburban</span>
+                    </div>
+                  </label>
+                </div>
+                <div class="column">
+                  <label class="environment-option">
+                    <input type="radio" name="preferred_environment" value="Rural" {{ 'checked' if edit_profile and edit_profile.preferred_environment == 'Rural' else '' }}>
+                    <div class="environment-card">
+                      <span class="icon">
+                        <i class="fas fa-tree"></i>
+                      </span>
+                      <span class="environment-name">Rural</span>
+                    </div>
+                  </label>
+                </div>
+                </div>
+            </div>
+            <p class="help">Choose your preferred campus setting</p>
+          </div>
+        </div>
+        
+        <div class="field is-grouped">
+          <div class="control">
+            <button type="button" class="button is-light back-button" data-prev="interests">
+              <span class="icon">
+                <i class="fas fa-arrow-left"></i>
+              </span>
+              <span>Back</span>
+            </button>
+          </div>
+          <div class="control">
+            <button type="button" class="button is-primary next-button" data-next="priorities">
+              <span>Next: Priorities</span>
+              <span class="icon">
+                <i class="fas fa-arrow-right"></i>
+              </span>
+            </button>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-section is-hidden" id="section-priorities">
+        <h2 class="subtitle is-4">Your Priorities</h2>
+        <p class="mb-4">Adjust the sliders to indicate how important each factor is to you in selecting a university.</p>
+        
+        <div class="field">
+          <label class="label">Academic Reputation</label>
+          <div class="control">
+            <input type="range" class="slider priority-slider" min="1" max="10" step="1" 
+              name="weight_academic" 
+              value="{{ (edit_profile.importance_weights.academic * 10) if edit_profile and edit_profile.importance_weights and 'academic' in edit_profile.importance_weights else 5 }}">
+                <div class="slider-labels">
+                    <span>Less Important</span>
+              <span>More Important</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="field">
+          <label class="label">Financial (Cost & Aid)</label>
+          <div class="control">
+            <input type="range" class="slider priority-slider" min="1" max="10" step="1" 
+              name="weight_financial" 
+              value="{{ (edit_profile.importance_weights.financial * 10) if edit_profile and edit_profile.importance_weights and 'financial' in edit_profile.importance_weights else 5 }}">
+            <div class="slider-labels">
+              <span>Less Important</span>
+              <span>More Important</span>
+            </div>
+                </div>
+            </div>
+            
+        <div class="field">
+          <label class="label">Location & Environment</label>
+          <div class="control">
+            <input type="range" class="slider priority-slider" min="1" max="10" step="1" 
+              name="weight_location" 
+              value="{{ (edit_profile.importance_weights.location * 10) if edit_profile and edit_profile.importance_weights and 'location' in edit_profile.importance_weights else 5 }}">
+                <div class="slider-labels">
+                    <span>Less Important</span>
+              <span>More Important</span>
+            </div>
+          </div>
+            </div>
+            
+        <div class="field">
+          <label class="label">Career Prospects</label>
+          <div class="control">
+            <input type="range" class="slider priority-slider" min="1" max="10" step="1" 
+              name="weight_career" 
+              value="{{ (edit_profile.importance_weights.career * 10) if edit_profile and edit_profile.importance_weights and 'career' in edit_profile.importance_weights else 5 }}">
+                <div class="slider-labels">
+                    <span>Less Important</span>
+              <span>More Important</span>
+            </div>
+          </div>
+            </div>
+            
+        <div class="field">
+          <label class="label">Campus Life</label>
+          <div class="control">
+            <input type="range" class="slider priority-slider" min="1" max="10" step="1" 
+              name="weight_campus" 
+              value="{{ (edit_profile.importance_weights.campus * 10) if edit_profile and edit_profile.importance_weights and 'campus' in edit_profile.importance_weights else 5 }}">
+            <div class="slider-labels">
+              <span>Less Important</span>
+              <span>More Important</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="notification is-warning is-light">
+          <span class="icon">
+            <i class="fas fa-info-circle"></i>
+          </span>
+          <span>These weights affect how universities are ranked for you. Higher importance means stronger influence on match scores.</span>
+        </div>
+        
+        <div class="field is-grouped">
+          <div class="control">
+            <button type="button" class="button is-light back-button" data-prev="preferences">
+              <span class="icon">
+                <i class="fas fa-arrow-left"></i>
+              </span>
+              <span>Back</span>
+            </button>
+          </div>
+          <div class="control">
+            <button type="submit" class="button is-success">
+              <span class="icon">
+                <i class="fas fa-save"></i>
+              </span>
+              <span>{{ 'Save Profile' if edit_profile else 'Create Profile' }}</span>
+            </button>
+          </div>
+        </div>
+            </div>
+        </form>
     </div>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Multi-step form navigation
-        const sections = document.querySelectorAll('.form-section');
-        const progressIndicator = document.getElementById('progress-indicator');
-        
-        const showSection = (sectionNum) => {
-            sections.forEach((section, index) => {
-                section.classList.toggle('hidden', index+1 !== sectionNum);
-                section.classList.toggle('active', index+1 === sectionNum);
-            });
-            
-            // Update progress bar
-            const progress = ((sectionNum - 1) / (sections.length - 1)) * 100;
-            progressIndicator.style.width = `${progress}%`;
-            
-            // Scroll to top of form
-            document.querySelector('.profile-card').scrollIntoView({ behavior: 'smooth' });
-        };
-        
-        // Set up next/back buttons
-        document.querySelectorAll('.next-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const nextSection = parseInt(this.getAttribute('data-next'));
-                showSection(nextSection);
-            });
-        });
-        
-        document.querySelectorAll('.back-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const prevSection = parseInt(this.getAttribute('data-prev'));
-                showSection(prevSection);
-            });
-        });
-        
-        // Enhanced slider visual feedback
-        const importanceSliders = document.querySelectorAll('.importance-slider');
-        importanceSliders.forEach(slider => {
-            const output = slider.parentElement.querySelector('.weight-value');
-            
-            // Update color based on value
-            const updateSliderColor = (value) => {
-                const percent = (value - 1) / 9 * 100;
-                slider.style.background = `linear-gradient(to right, #4a89dc ${percent}%, #e6e6e6 ${percent}%)`;
-                output.textContent = value;
-            };
-            
-            // Set initial color
-            updateSliderColor(slider.value);
-            
-            // Update when slider changes
-            slider.addEventListener('input', function() {
-                updateSliderColor(slider.value);
-            });
-        });
-        
-        // GPA feedback and visualization
-        const gpaInput = document.getElementById('gpa');
-        const gpaFeedback = document.getElementById('gpa-feedback');
-        const gpaBar = document.getElementById('gpa-bar');
-        
-        gpaInput.addEventListener('input', function() {
-            const gpa = parseFloat(this.value);
-            if (!isNaN(gpa) && gpa >= 0 && gpa <= 4.0) {
-                // Update GPA bar
-                const percent = (gpa / 4.0) * 100;
-                gpaBar.style.width = `${percent}%`;
-                
-                // Color based on GPA
-                if (gpa >= 3.7) {
-                    gpaBar.style.backgroundColor = '#2ecc71';
-                    gpaFeedback.textContent = 'Excellent! Top schools likely in reach.';
-                    gpaFeedback.className = 'form-feedback good';
-                } else if (gpa >= 3.0) {
-                    gpaBar.style.backgroundColor = '#3498db';
-                    gpaFeedback.textContent = 'Good! Many quality schools available.';
-                    gpaFeedback.className = 'form-feedback medium';
-                } else if (gpa >= 2.0) {
-                    gpaBar.style.backgroundColor = '#f39c12';
-                    gpaFeedback.textContent = 'Consider schools with flexible admissions.';
-                    gpaFeedback.className = 'form-feedback warning';
-                } else {
-                    gpaBar.style.backgroundColor = '#e74c3c';
-                    gpaFeedback.textContent = 'Limited options. Consider community colleges.';
-                    gpaFeedback.className = 'form-feedback warning';
-                }
-            } else {
-                gpaBar.style.width = '0%';
-                gpaFeedback.textContent = '';
-                gpaFeedback.className = 'form-feedback';
-            }
-        });
-        
-        // SAT feedback and visualization
-        const satInput = document.getElementById('sat_score');
-        const satFeedback = document.getElementById('sat-feedback');
-        const satMarker = document.getElementById('sat-marker');
-        
-        satInput.addEventListener('input', function() {
-            const sat = parseInt(this.value);
-            if (!isNaN(sat) && sat >= 400 && sat <= 1600) {
-                // Update SAT marker position
-                const percent = ((sat - 400) / 1200) * 100;
-                satMarker.style.left = `${percent}%`;
-                
-                // Feedback based on SAT score
-                if (sat >= 1400) {
-                    satMarker.style.backgroundColor = '#2ecc71';
-                    satFeedback.textContent = 'Excellent! Top-tier university potential.';
-                    satFeedback.className = 'form-feedback good';
-                } else if (sat >= 1200) {
-                    satMarker.style.backgroundColor = '#3498db';
-                    satFeedback.textContent = 'Very good! Many options available.';
-                    satFeedback.className = 'form-feedback medium';
-                } else if (sat >= 1000) {
-                    satMarker.style.backgroundColor = '#f39c12';
-                    satFeedback.textContent = 'Consider mid-range universities.';
-                    satFeedback.className = 'form-feedback warning';
-                } else {
-                    satMarker.style.backgroundColor = '#e74c3c';
-                    satFeedback.textContent = 'Consider schools with flexible admissions.';
-                    satFeedback.className = 'form-feedback warning';
-                }
-            } else {
-                satMarker.style.left = '0%';
-                satFeedback.textContent = '';
-                satFeedback.className = 'form-feedback';
-            }
-        });
-        
-        // Budget visualization and feedback
-        const budgetInput = document.getElementById('budget');
-        const budgetLevel = document.getElementById('budget-level');
-        const budgetFeedback = document.getElementById('budget-feedback');
-        
-        budgetInput.addEventListener('input', function() {
-            const budget = parseInt(this.value);
-            if (!isNaN(budget) && budget > 0) {
-                let percentage;
-                if (budget >= 50000) {
-                    percentage = 100;
-                    budgetFeedback.textContent = 'Elite private universities are within your budget';
-                    budgetFeedback.className = 'form-feedback good';
-                } else if (budget >= 30000) {
-                    percentage = 60 + (budget - 30000) / 20000 * 40;
-                    budgetFeedback.textContent = 'Many private universities are within your budget';
-                    budgetFeedback.className = 'form-feedback good';
-                } else if (budget >= 15000) {
-                    percentage = 30 + (budget - 15000) / 15000 * 30;
-                    budgetFeedback.textContent = 'Consider state universities or scholarships';
-                    budgetFeedback.className = 'form-feedback medium';
-                } else {
-                    percentage = budget / 15000 * 30;
-                    budgetFeedback.textContent = 'Look into community colleges or significant financial aid';
-                    budgetFeedback.className = 'form-feedback warning';
-                }
-                
-                budgetLevel.style.width = `${percentage}%`;
-                
-                if (percentage <= 30) {
-                    budgetLevel.style.backgroundColor = '#e74c3c';
-                } else if (percentage <= 70) {
-                    budgetLevel.style.backgroundColor = '#f39c12';
-                } else {
-                    budgetLevel.style.backgroundColor = '#2ecc71';
-                }
-            } else {
-                budgetLevel.style.width = '0%';
-                budgetFeedback.textContent = '';
-            }
-        });
-        
-        // Major tags with autocomplete
-        const majorsInput = document.getElementById('majors-input');
-        const majorsHidden = document.getElementById('majors');
-        const majorsContainer = document.getElementById('majors-tags');
-        const majorSuggestions = document.getElementById('major-suggestions');
-        
-        // Common majors for suggestions
-        const commonMajors = [
-            'Computer Science', 'Business Administration', 'Engineering', 'Psychology',
-            'Biology', 'Communications', 'Political Science', 'Economics', 'English',
-            'Chemistry', 'Mathematics', 'History', 'Sociology', 'Art', 'Education',
-            'Physics', 'Marketing', 'Criminal Justice', 'Accounting', 'Philosophy',
-            'Nursing', 'Architecture', 'Medicine', 'Music', 'Environmental Science'
-        ];
-        
-        let selectedMajors = [];
-        
-        const updateMajorTags = () => {
-            majorsContainer.innerHTML = '';
-            selectedMajors.forEach((major, index) => {
-                const tag = document.createElement('span');
-                tag.className = 'tag';
-                tag.innerHTML = `${major} <span class="tag-remove" data-index="${index}">×</span>`;
-                majorsContainer.appendChild(tag);
-            });
-            
-            // Update hidden input
-            majorsHidden.value = selectedMajors.join(',');
-        };
-        
-        // Show suggestions on focus
-        majorsInput.addEventListener('focus', function() {
-            // Filter out already selected majors
-            const availableMajors = commonMajors.filter(m => !selectedMajors.includes(m));
-            if (availableMajors.length > 0) {
-                majorSuggestions.innerHTML = '';
-                availableMajors.forEach(major => {
-                    const item = document.createElement('div');
-                    item.className = 'suggestion-item';
-                    item.textContent = major;
-                    item.addEventListener('click', function() {
-                        if (!selectedMajors.includes(major)) {
-                            selectedMajors.push(major);
-                            updateMajorTags();
-                            majorsInput.value = '';
-                            majorSuggestions.innerHTML = '';
-                        }
-                    });
-                    majorSuggestions.appendChild(item);
-                });
-                majorSuggestions.style.display = 'block';
-            }
-        });
-        
-        // Filter suggestions as user types
-        majorsInput.addEventListener('input', function() {
-            const input = this.value.toLowerCase();
-            if (input.length > 0) {
-                const filtered = commonMajors.filter(m => 
-                    m.toLowerCase().includes(input) && !selectedMajors.includes(m)
-                );
-                
-                majorSuggestions.innerHTML = '';
-                if (filtered.length > 0) {
-                    filtered.forEach(major => {
-                        const item = document.createElement('div');
-                        item.className = 'suggestion-item';
-                        item.textContent = major;
-                        item.addEventListener('click', function() {
-                            selectedMajors.push(major);
-                            updateMajorTags();
-                            majorsInput.value = '';
-                            majorSuggestions.style.display = 'none';
-                        });
-                        majorSuggestions.appendChild(item);
-                    });
-                    majorSuggestions.style.display = 'block';
-                } else {
-                    majorSuggestions.style.display = 'none';
-                }
-            } else {
-                majorSuggestions.style.display = 'none';
-            }
-        });
-        
-        // Add major on Enter
-        majorsInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && this.value.trim() !== '') {
-                e.preventDefault();
-                if (!selectedMajors.includes(this.value.trim())) {
-                    selectedMajors.push(this.value.trim());
-                    updateMajorTags();
-                }
-                this.value = '';
-                majorSuggestions.style.display = 'none';
-            }
-        });
-        
-        // Hide suggestions when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!majorsInput.contains(e.target) && !majorSuggestions.contains(e.target)) {
-                majorSuggestions.style.display = 'none';
-            }
-        });
-        
-        // Remove tag when clicking X
-        document.addEventListener('click', function(e) {
-            if (e.target.classList.contains('tag-remove')) {
-                const index = parseInt(e.target.getAttribute('data-index'));
-                selectedMajors.splice(index, 1);
-                updateMajorTags();
-            }
-        });
-        
-        // Location tags with suggestions
-        const locationsInput = document.getElementById('locations-input');
-        const locationsHidden = document.getElementById('locations');
-        const locationsContainer = document.getElementById('locations-tags');
-        const locationSuggestions = document.getElementById('location-suggestions');
-        
-        // Popular locations
-        const popularLocations = [
-            'California', 'New York', 'Massachusetts', 'Texas', 'Florida', 
-            'Illinois', 'Pennsylvania', 'North Carolina', 'Michigan', 'Georgia',
-            'Boston', 'Los Angeles', 'Chicago', 'New York City', 'San Francisco',
-            'Philadelphia', 'Washington DC', 'Atlanta', 'Seattle', 'Austin'
-        ];
-        
-        let selectedLocations = [];
-        
-        const updateLocationTags = () => {
-            locationsContainer.innerHTML = '';
-            selectedLocations.forEach((location, index) => {
-                const tag = document.createElement('span');
-                tag.className = 'tag';
-                tag.innerHTML = `${location} <span class="tag-remove" data-index="${index}">×</span>`;
-                locationsContainer.appendChild(tag);
-            });
-            
-            // Update hidden input
-            locationsHidden.value = selectedLocations.join(',');
-        };
-        
-        // Show suggestions on focus
-        locationsInput.addEventListener('focus', function() {
-            const availableLocations = popularLocations.filter(l => !selectedLocations.includes(l));
-            if (availableLocations.length > 0) {
-                locationSuggestions.innerHTML = '';
-                availableLocations.forEach(location => {
-                    const item = document.createElement('div');
-                    item.className = 'suggestion-item';
-                    item.textContent = location;
-                    item.addEventListener('click', function() {
-                        if (!selectedLocations.includes(location)) {
-                            selectedLocations.push(location);
-                            updateLocationTags();
-                            locationsInput.value = '';
-                            locationSuggestions.innerHTML = '';
-                        }
-                    });
-                    locationSuggestions.appendChild(item);
-                });
-                locationSuggestions.style.display = 'block';
-            }
-        });
-        
-        // Filter location suggestions
-        locationsInput.addEventListener('input', function() {
-            const input = this.value.toLowerCase();
-            if (input.length > 0) {
-                const filtered = popularLocations.filter(l => 
-                    l.toLowerCase().includes(input) && !selectedLocations.includes(l)
-                );
-                
-                locationSuggestions.innerHTML = '';
-                if (filtered.length > 0) {
-                    filtered.forEach(location => {
-                        const item = document.createElement('div');
-                        item.className = 'suggestion-item';
-                        item.textContent = location;
-                        item.addEventListener('click', function() {
-                            selectedLocations.push(location);
-                            updateLocationTags();
-                            locationsInput.value = '';
-                            locationSuggestions.style.display = 'none';
-                        });
-                        locationSuggestions.appendChild(item);
-                    });
-                    locationSuggestions.style.display = 'block';
-                } else {
-                    locationSuggestions.style.display = 'none';
-                }
-            } else {
-                locationSuggestions.style.display = 'none';
-            }
-        });
-        
-        // Add location on Enter
-        locationsInput.addEventListener('keydown', function(e) {
-            if (e.key === 'Enter' && this.value.trim() !== '') {
-                e.preventDefault();
-                if (!selectedLocations.includes(this.value.trim())) {
-                    selectedLocations.push(this.value.trim());
-                    updateLocationTags();
-                }
-                this.value = '';
-                locationSuggestions.style.display = 'none';
-            }
-        });
-        
-        // Environment selector
-        const environmentOptions = document.querySelectorAll('.environment-option');
-        const environmentInput = document.getElementById('environment');
-        
-        environmentOptions.forEach(option => {
-            option.addEventListener('click', function() {
-                environmentOptions.forEach(opt => opt.classList.remove('selected'));
-                this.classList.add('selected');
-                environmentInput.value = this.getAttribute('data-value');
-            });
-        });
-        
-        // Initialize first section
-        showSection(1);
-    });
-</script>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-    .profile-card {
-        border-radius: 12px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-        overflow: hidden;
-        margin-bottom: 2rem;
-        position: relative;
-    }
-    
-    .profile-progress-bar {
-        height: 5px;
-        background-color: #f1f1f1;
-        width: 100%;
-    }
-    
-    .progress-indicator {
-        height: 100%;
-        width: 0%;
-        background: linear-gradient(to right, var(--primary-color), var(--accent-color));
-        transition: width 0.5s ease;
-    }
-    
-    .form-section {
-        padding: 20px;
-        transition: all 0.3s ease;
-        opacity: 1;
-        transform: translateX(0);
-    }
-    
-    .form-section.hidden {
-        display: none;
-        opacity: 0;
-        transform: translateX(20px);
-    }
-    
-    .section-header {
-        display: flex;
-        align-items: center;
-        margin-bottom: 1.5rem;
-        padding-bottom: 1rem;
-        border-bottom: 1px solid #eee;
-    }
-    
-    .section-icon {
-        width: 40px;
-        height: 40px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        background-color: var(--primary-color);
-        color: white;
-        border-radius: 50%;
-        margin-right: 1rem;
-    }
-    
-    .section-icon i {
-        font-size: 1.2rem;
-    }
-    
-    .section-nav {
+  /* Progress tracker */
+  .progress-tracker {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 2rem 0;
+  }
+  
+  .progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .progress-step.active .step-icon {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .progress-step.completed .step-icon {
+    background-color: #48c774;
+    color: white;
+  }
+  
+  .step-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: #f5f5f5;
+    color: #888;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+    transition: background-color 0.3s, color 0.3s;
+  }
+  
+  .step-name {
+    font-size: 0.8rem;
+    color: #888;
+    text-align: center;
+  }
+  
+  .progress-step.active .step-name,
+  .progress-step.completed .step-name {
+    color: #333;
+    font-weight: 600;
+  }
+  
+  .progress-line {
+    flex-grow: 1;
+    height: 2px;
+    background-color: #f5f5f5;
+    position: relative;
+    z-index: 0;
+  }
+  
+  .progress-line.completed {
+    background-color: #48c774;
+  }
+  
+  /* Form sections */
+  .form-section {
+    transition: opacity 0.3s, transform 0.3s;
+  }
+  
+  .form-section.is-hidden {
+    display: none;
+  }
+  
+  /* GPA and SAT scales */
+  .gpa-scale,
+  .sat-scale {
+    display: flex;
+    margin-top: 0.5rem;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  
+  .scale-item {
+    flex: 1;
+    text-align: center;
+    padding: 0.3rem 0;
+    font-size: 0.7rem;
+    background-color: #f5f5f5;
+    border-right: 1px solid white;
+    transition: background-color 0.3s;
+  }
+  
+  .scale-item:last-child {
+    border-right: none;
+  }
+  
+  .scale-item.active {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  /* Interest checkboxes */
+  .interest-checkbox {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 4px;
+    background-color: #f5f5f5;
+    transition: background-color 0.3s, color 0.3s;
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+  
+  input[type="checkbox"]:checked + .interest-checkbox {
+    background-color: var(--primary-color);
+    color: white;
+  }
+  
+  .interest-checkbox i {
+    margin-right: 0.5rem;
+  }
+  
+  /* Budget meter */
+  .budget-meter {
+    position: relative;
+  }
+  
+  .meter-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+    font-size: 0.7rem;
+    color: #888;
+  }
+  
+  .meter-bar {
+    height: 8px;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .meter-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    width: 0;
+    transition: width 0.3s;
+  }
+  
+  .meter-markers {
         display: flex;
         justify-content: space-between;
-        margin-top: 2rem;
-    }
-    
-    .gpa-visualization {
-        height: 10px;
-        background-color: #e6e6e6;
-        border-radius: 5px;
-        margin-top: 0.5rem;
-        overflow: hidden;
-    }
-    
-    .gpa-bar {
-        height: 100%;
-        width: 0%;
-        border-radius: 5px;
-        transition: width 0.3s, background-color 0.3s;
-    }
-    
-    .sat-visualization {
-        height: 30px;
-        background-color: #f5f5f5;
-        border-radius: 5px;
-        margin-top: 0.5rem;
-        position: relative;
-    }
-    
-    .sat-marker {
-        width: 15px;
-        height: 15px;
-        background-color: var(--primary-color);
-        border-radius: 50%;
-        position: absolute;
-        top: 7.5px;
-        left: 0;
-        transform: translateX(-7.5px);
-        transition: left 0.3s, background-color 0.3s;
-    }
-    
-    .sat-scale {
-        display: flex;
-        justify-content: space-between;
-        padding: 0 7.5px;
-        margin-top: 5px;
-        font-size: 0.75rem;
-        color: #666;
-    }
-    
-    .weight-slider {
-        margin-bottom: 1.5rem;
-    }
-    
-    .slider-labels {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.8rem;
-        color: #666;
         margin-top: 0.25rem;
-    }
-    
-    .importance-slider {
+    position: relative;
+    height: 16px;
+  }
+  
+  .marker {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    color: #888;
+  }
+  
+  /* US Map */
+  .us-map-container {
+    padding: 1rem;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    background-color: #f9f9f9;
+    margin-bottom: 1rem;
+  }
+  
+  .us-regions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  .region-item {
+    flex: 0 0 33.333%;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+  }
+  
+  .region-checkbox {
+    margin-right: 0.5rem;
+  }
+  
+  /* Environment selection */
+  .environment-option {
+    display: block;
+    cursor: pointer;
+  }
+  
+  .environment-option input[type="radio"] {
+    display: none;
+  }
+  
+  .environment-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    border: 2px solid #eee;
+    border-radius: 8px;
+    text-align: center;
+    transition: all 0.3s;
+  }
+  
+  .environment-card .icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #888;
+    transition: color 0.3s;
+  }
+  
+  .environment-name {
+    font-size: 0.9rem;
+  }
+  
+  .environment-option input[type="radio"]:checked + .environment-card {
+    border-color: var(--primary-color);
+    background-color: rgba(0, 209, 178, 0.1);
+  }
+  
+  .environment-option input[type="radio"]:checked + .environment-card .icon {
+    color: var(--primary-color);
+  }
+  
+  /* Priority sliders */
+  .priority-slider {
+    -webkit-appearance: none;
         width: 100%;
-        height: 10px;
-        border-radius: 5px;
+    height: 8px;
+    border-radius: 4px;
+    background: #f5f5f5;
         outline: none;
-        -webkit-appearance: none;
+    margin: 1rem 0 0.5rem;
     }
     
-    .importance-slider::-webkit-slider-thumb {
+  .priority-slider::-webkit-slider-thumb {
         -webkit-appearance: none;
+    appearance: none;
         width: 20px;
         height: 20px;
         border-radius: 50%;
-        background: var(--primary-color);
+    background: var(--primary-color);
         cursor: pointer;
-        box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
     }
     
-    .weight-value {
-        display: inline-block;
-        min-width: 1.5rem;
-        text-align: center;
-        background: var(--primary-color);
-        color: white;
+  .priority-slider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
         border-radius: 50%;
-        padding: 0.1rem 0.3rem;
-        margin-left: 0.5rem;
+    background: var(--primary-color);
+    cursor: pointer;
+    border: none;
+  }
+  
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: #888;
+  }
+  
+  @media screen and (max-width: 768px) {
+    .progress-tracker {
+      overflow-x: auto;
+      padding: 0.5rem 0;
     }
     
-    .form-feedback {
-        font-size: 0.85rem;
-        margin-top: 0.25rem;
+    .progress-step {
+      min-width: 70px;
     }
     
-    .form-feedback.good {
-        color: #2ecc71;
+    .region-item {
+      flex: 0 0 50%;
     }
-    
-    .form-feedback.medium {
-        color: #3498db;
-    }
-    
-    .form-feedback.warning {
-        color: #e67e22;
-    }
-    
-    .tags-container {
-        display: flex;
-        flex-wrap: wrap;
-        margin-top: 0.5rem;
-        gap: 0.5rem;
-    }
-    
-    .tag {
-        background-color: #e0e7ff;
-        color: #4a5568;
-        border-radius: 30px;
-        padding: 0.35rem 0.75rem;
-        font-size: 0.875rem;
-        display: flex;
-        align-items: center;
-        animation: fadeIn 0.3s;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(5px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .tag-remove {
-        margin-left: 5px;
-        cursor: pointer;
-        font-weight: bold;
-        font-size: 1.2rem;
-        line-height: 1;
-    }
-    
-    .budget-indicator {
-        height: 10px;
-        background-color: #e6e6e6;
-        border-radius: 5px;
-        margin-top: 0.5rem;
-    }
-    
-    .budget-labels {
-        display: flex;
-        justify-content: space-between;
-        font-size: 0.75rem;
-        color: #666;
-        margin-top: 0.25rem;
-    }
-    
-    #budget-level {
-        height: 100%;
-        width: 0%;
-        border-radius: 5px;
-        transition: width 0.3s, background-color 0.3s;
-    }
-    
-    .input-with-suggestions {
-        position: relative;
-    }
-    
-    .suggestions-dropdown {
-        position: absolute;
-        width: 100%;
-        max-height: 200px;
-        overflow-y: auto;
-        background: white;
-        border: 1px solid #ddd;
-        border-radius: 5px;
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-        z-index: 10;
-        display: none;
-    }
-    
-    .suggestion-item {
-        padding: 8px 12px;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    
-    .suggestion-item:hover {
-        background-color: #f5f7fa;
-    }
-    
-    .environment-selector {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 1rem;
-        margin-top: 0.5rem;
-    }
-    
-    .environment-option {
-        background-color: #f5f7fa;
-        border: 2px solid transparent;
-        border-radius: 8px;
-        padding: 1rem;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s;
-    }
-    
-    .environment-option:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-    }
-    
-    .environment-option.selected {
-        border-color: var(--primary-color);
-        background-color: rgba(var(--primary-rgb), 0.1);
-    }
-    
-    .env-icon {
-        font-size: 2rem;
-        margin-bottom: 0.5rem;
-        color: var(--primary-color);
-    }
-    
-    /* Responsive adjustments */
-    @media (max-width: 768px) {
-        .environment-selector {
-            grid-template-columns: 1fr;
-        }
-    }
+  }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Progress tracking
+    const sections = {
+      'academics': document.getElementById('section-academics'),
+      'interests': document.getElementById('section-interests'),
+      'preferences': document.getElementById('section-preferences'),
+      'priorities': document.getElementById('section-priorities')
+    };
+    
+    const progressSteps = document.querySelectorAll('.progress-step');
+    const progressLines = document.querySelectorAll('.progress-line');
+    
+    function activateSection(sectionId) {
+      // Hide all sections
+      Object.values(sections).forEach(section => {
+        section.classList.add('is-hidden');
+      });
+      
+      // Show the active section
+      sections[sectionId].classList.remove('is-hidden');
+      
+      // Update progress steps
+      progressSteps.forEach((step, index) => {
+        const stepId = step.getAttribute('data-step');
+        step.classList.remove('active', 'completed');
+        
+        if (stepId === sectionId) {
+          step.classList.add('active');
+          
+          // Mark previous steps as completed
+          for (let i = 0; i < index; i++) {
+            progressSteps[i].classList.add('completed');
+            if (i < progressLines.length) {
+              progressLines[i].classList.add('completed');
+            }
+          }
+        }
+      });
+    }
+    
+    // Initialize first section
+    activateSection('academics');
+    
+    // Next button click
+    const nextButtons = document.querySelectorAll('.next-button');
+    nextButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const nextSection = this.getAttribute('data-next');
+        activateSection(nextSection);
+      });
+    });
+    
+    // Back button click
+    const backButtons = document.querySelectorAll('.back-button');
+    backButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        const prevSection = this.getAttribute('data-prev');
+        activateSection(prevSection);
+      });
+    });
+    
+    // GPA and SAT scale indicators
+    const gpaInput = document.querySelector('input[name="gpa"]');
+    const satInput = document.querySelector('input[name="sat_score"]');
+    const gpaScaleItems = document.querySelectorAll('.gpa-scale .scale-item');
+    const satScaleItems = document.querySelectorAll('.sat-scale .scale-item');
+    
+    function updateGpaScale() {
+      const gpa = parseFloat(gpaInput.value) || 0;
+      
+      gpaScaleItems.forEach(item => {
+        item.classList.remove('active');
+        
+        const range = item.getAttribute('data-range').split('-');
+        const min = parseFloat(range[0]);
+        const max = parseFloat(range[1]);
+        
+        if (gpa >= min && gpa <= max) {
+          item.classList.add('active');
+        }
+      });
+    }
+    
+    function updateSatScale() {
+      const sat = parseInt(satInput.value) || 0;
+      
+      satScaleItems.forEach(item => {
+        item.classList.remove('active');
+        
+        const range = item.getAttribute('data-range').split('-');
+        const min = parseInt(range[0]);
+        const max = parseInt(range[1]);
+        
+        if (sat >= min && sat <= max) {
+          item.classList.add('active');
+        }
+      });
+    }
+    
+    // Initialize scales
+    updateGpaScale();
+    updateSatScale();
+    
+    // Update on input
+    gpaInput.addEventListener('input', updateGpaScale);
+    satInput.addEventListener('input', updateSatScale);
+    
+    // Major selection
+    const majorDropdown = document.getElementById('major-dropdown');
+    const addMajorBtn = document.getElementById('add-major-btn');
+    const selectedMajors = document.getElementById('selected-majors');
+    
+    addMajorBtn.addEventListener('click', function() {
+      const major = majorDropdown.value;
+      
+      if (major && selectedMajors.children.length < 3) {
+        // Check if already selected
+        const existingMajors = Array.from(selectedMajors.children).map(tag => {
+          return tag.textContent.trim();
+        });
+        
+        if (!existingMajors.includes(major)) {
+          // Create new tag
+          const tag = document.createElement('span');
+          tag.className = 'tag is-info is-medium';
+          tag.innerHTML = `
+            ${major}
+            <button type="button" class="delete is-small remove-major" data-major="${major}"></button>
+            <input type="hidden" name="preferred_majors" value="${major}">
+          `;
+          
+          selectedMajors.appendChild(tag);
+          majorDropdown.value = '';
+          
+          // Add remove event listener
+          const removeBtn = tag.querySelector('.remove-major');
+          removeBtn.addEventListener('click', function() {
+            tag.remove();
+          });
+        }
+      }
+    });
+    
+    // Add listeners to any existing remove buttons
+    document.querySelectorAll('.remove-major').forEach(btn => {
+      btn.addEventListener('click', function() {
+        this.closest('.tag').remove();
+      });
+    });
+    
+    // Budget meter
+    const budgetInput = document.querySelector('input[name="budget"]');
+    const budgetFill = document.querySelector('.meter-fill');
+    
+    function updateBudgetMeter() {
+      const budget = parseInt(budgetInput.value) || 0;
+      const percentage = Math.min(100, (budget / 60000) * 100);
+      budgetFill.style.width = `${percentage}%`;
+    }
+    
+    // Initialize budget meter
+    updateBudgetMeter();
+    
+    // Update on input
+    budgetInput.addEventListener('input', updateBudgetMeter);
+  });
+</script>
 {% endblock %} 

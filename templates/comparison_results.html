@@ -59,6 +59,106 @@
     </div>
 </div>
 
+{% if user_profile and insights %}
+<div class="card personalized-insights">
+    <div class="card-body">
+        <h3>Personalized Insights Based on Your Profile</h3>
+        <p>We analyzed these universities based on your academic profile, preferences, and goals.</p>
+        
+        <div class="profile-summary">
+            <h4>Your Profile Summary</h4>
+            <div class="profile-grid">
+                <div class="profile-item">
+                    <span class="profile-label">Academic</span>
+                    <span class="profile-value">
+                        {% if user_profile.gpa and user_profile.sat_score %}
+                            GPA: {{ user_profile.gpa }} | SAT: {{ user_profile.sat_score }}
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="profile-item">
+                    <span class="profile-label">Budget</span>
+                    <span class="profile-value">
+                        {% if user_profile.budget %}
+                            ${{ user_profile.budget|format_number }}
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="profile-item">
+                    <span class="profile-label">Majors</span>
+                    <span class="profile-value">
+                        {% if user_profile.preferred_majors %}
+                            {{ user_profile.preferred_majors|join(', ') }}
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="profile-item">
+                    <span class="profile-label">Location</span>
+                    <span class="profile-value">
+                        {% if user_profile.preferred_locations %}
+                            {{ user_profile.preferred_locations|join(', ') }}
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="profile-item">
+                    <span class="profile-label">Environment</span>
+                    <span class="profile-value">
+                        {% if user_profile.preferred_environment %}
+                            {{ user_profile.preferred_environment }}
+                        {% else %}
+                            Not specified
+                        {% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="insights-container">
+            {% for university in universities %}
+                <div class="university-insights">
+                    <h4>{{ university.name }} Insights</h4>
+                    <ul class="insights-list">
+                        {% if university.id in insights and insights[university.id] %}
+                            {% for insight in insights[university.id] %}
+                                <li class="insight-item {{ insight.type }}">
+                                    <span class="insight-icon">
+                                        {% if insight.type == 'positive' %}
+                                            <i class="fa fa-check-circle"></i>
+                                        {% elif insight.type == 'negative' %}
+                                            <i class="fa fa-times-circle"></i>
+                                        {% else %}
+                                            <i class="fa fa-info-circle"></i>
+                                        {% endif %}
+                                    </span>
+                                    <span class="insight-text">{{ insight.text }}</span>
+                                </li>
+                            {% endfor %}
+                        {% else %}
+                            <li class="insight-item neutral">
+                                <span class="insight-icon"><i class="fa fa-info-circle"></i></span>
+                                <span class="insight-text">No personalized insights available.</span>
+                            </li>
+                        {% endif %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="card decision-factors">
     <div class="card-body">
         <h3>Key Decision Factors</h3>
@@ -99,6 +199,10 @@
                     <li>Exceptional overall match ({{ uni.match_score }}%) with your profile</li>
                     {% elif uni.match_score >= 75 %}
                     <li>Strong overall match ({{ uni.match_score }}%) with your profile</li>
+                    {% endif %}
+                    
+                    {% if user_profile and uni.environment == user_profile.preferred_environment %}
+                    <li>Matches your preferred {{ user_profile.preferred_environment }} environment</li>
                     {% endif %}
                 </ul>
             </div>
@@ -167,6 +271,100 @@
         padding-left: 1.5rem;
     }
     
+    /* Personalized insights styles */
+    .personalized-insights {
+        margin: 2rem 0;
+    }
+    
+    .profile-summary {
+        background-color: var(--light-bg);
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        margin-bottom: 2rem;
+    }
+    
+    .profile-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .profile-item {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .profile-label {
+        font-weight: 600;
+        color: var(--primary-color);
+        margin-bottom: 0.25rem;
+    }
+    
+    .profile-value {
+        font-size: 0.95rem;
+    }
+    
+    .insights-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 1.5rem;
+    }
+    
+    .university-insights {
+        background-color: white;
+        padding: 1.5rem;
+        border-radius: var(--border-radius);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    }
+    
+    .insights-list {
+        list-style: none;
+        padding: 0;
+        margin: 1rem 0 0;
+    }
+    
+    .insight-item {
+        display: flex;
+        align-items: flex-start;
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        border-radius: var(--border-radius);
+        background-color: var(--light-bg);
+    }
+    
+    .insight-item.positive {
+        background-color: rgba(72, 199, 142, 0.1);
+    }
+    
+    .insight-item.negative {
+        background-color: rgba(241, 70, 104, 0.1);
+    }
+    
+    .insight-item.neutral {
+        background-color: rgba(62, 142, 208, 0.1);
+    }
+    
+    .insight-icon {
+        margin-right: 0.75rem;
+        flex: 0 0 auto;
+    }
+    
+    .insight-item.positive .insight-icon {
+        color: #48c78e;
+    }
+    
+    .insight-item.negative .insight-icon {
+        color: #f14668;
+    }
+    
+    .insight-item.neutral .insight-icon {
+        color: #3e8ed0;
+    }
+    
+    .insight-text {
+        flex: 1;
+    }
+    
     .factors-grid {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -220,7 +418,9 @@
     
     @media (max-width: 768px) {
         .explanation-grid,
-        .factors-grid {
+        .factors-grid,
+        .insights-container,
+        .profile-grid {
             grid-template-columns: 1fr;
         }
     }

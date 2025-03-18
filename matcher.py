@@ -138,7 +138,7 @@ class UniversityMatcher:
     
     def calculate_academic_match(self, user_profile: Dict, university: Dict) -> float:
         """Calculate the academic compatibility score between user and university"""
-        academic_score = 0
+            academic_score = 0
         
         # Calculate academic strength based on GPA and SAT
         if "gpa" in user_profile and "sat_score" in user_profile:
@@ -187,7 +187,7 @@ class UniversityMatcher:
                     # Logarithmic rank scaling (difference between #1 and #10 is more significant than #90 and #100)
                     rank_match = 1 - (math.log10(rank) / math.log10(200))
                 
-            # Use accurate acceptance rate if available
+                # Use accurate acceptance rate if available
             if "id" in university:
                 try:
                     acceptance_rate = self.get_accurate_acceptance_rate(university["id"])
@@ -557,14 +557,14 @@ class UniversityMatcher:
             # Skip if we've already seen this university name or if university data is invalid
             if not uni or "name" not in uni or uni["name"] in seen_names:
                 continue
-            
+                
             try:
-                # Use Deepseek API if enabled, otherwise use regular algorithm
-                if self.use_deepseek:
-                    score = self.calculate_match_score_with_deepseek(user_profile, uni)
-                else:
-                    score = self.calculate_match_score(user_profile, uni, weights)
-                    
+            # Use Deepseek API if enabled, otherwise use regular algorithm
+            if self.use_deepseek:
+                score = self.calculate_match_score_with_deepseek(user_profile, uni)
+            else:
+                score = self.calculate_match_score(user_profile, uni, weights)
+                
                 # Validate score before adding
                 if not isinstance(score, (int, float)) or math.isnan(score):
                     print(f"Warning: Invalid score for {uni.get('name', 'Unknown')}")
@@ -573,8 +573,8 @@ class UniversityMatcher:
                 # Ensure score is within valid range
                 score = min(max(score, 0), 1)
                     
-                scored_unis.append((uni, score))
-                seen_names.add(uni["name"])
+            scored_unis.append((uni, score))
+            seen_names.add(uni["name"])
             except Exception as e:
                 print(f"Error scoring university {uni.get('name', 'Unknown')}: {e}")
                 continue
@@ -586,7 +586,7 @@ class UniversityMatcher:
         recommendations = []
         for uni, score in scored_unis[:top_n]:
             try:
-                uni_with_score = uni.copy()
+            uni_with_score = uni.copy()
                 uni_with_score["match_score"] = round(score * 100, 1)  # Convert to percentage and round
                 
                 # Add component scores for transparency
@@ -606,21 +606,21 @@ class UniversityMatcher:
                         "career": round(min(max(career, 0), 1) * 100, 1),
                         "campus": round(min(max(campus, 0), 1) * 100, 1)
                     }
-                
-                # Add accurate acceptance rate if available
-                if "id" in uni:
+            
+            # Add accurate acceptance rate if available
+            if "id" in uni:
                     try:
-                        uni_with_score["accurate_acceptance_rate"] = self.get_accurate_acceptance_rate(uni["id"])
+                uni_with_score["accurate_acceptance_rate"] = self.get_accurate_acceptance_rate(uni["id"])
                     except Exception as e:
                         print(f"Error getting acceptance rate for {uni.get('name', 'Unknown')}: {e}")
                         uni_with_score["accurate_acceptance_rate"] = uni.get("acceptance_rate", 50.0)
-                    
-                recommendations.append(uni_with_score)
+                
+            recommendations.append(uni_with_score)
             except Exception as e:
                 print(f"Error processing university {uni.get('name', 'Unknown')} for recommendations: {e}")
                 continue
             
-        return recommendations
+        return recommendations 
     
     def match_universities(self, user_profile: Dict, universities: List[Dict]) -> List[Dict]:
         """

@@ -32,19 +32,90 @@
                 <div class="card-content">
                   <p class="title is-5">{{ profile.profile_name }}</p>
                   <div class="content">
-                    <p><strong>GPA:</strong> {{ profile.gpa }}</p>
-                    <p><strong>SAT Score:</strong> {{ profile.sat_score }}</p>
+                    <div class="profile-details">
+                      <div class="profile-detail">
+                        <span class="detail-label">Academic Stats</span>
+                        <div class="detail-value">
+                          <div class="academic-stats">
+                            <div class="stat-item">
+                              <span class="stat-icon"><i class="fas fa-graduation-cap"></i></span>
+                              <span class="stat-label">GPA</span>
+                              <span class="stat-value">{{ profile.gpa }}</span>
+                            </div>
+                            <div class="stat-item">
+                              <span class="stat-icon"><i class="fas fa-file-alt"></i></span>
+                              <span class="stat-label">SAT</span>
+                              <span class="stat-value">{{ profile.sat_score }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div class="profile-detail">
+                        <span class="detail-label">Financial</span>
+                        <div class="detail-value">
+                          <div class="financial-stats">
+                            <div class="stat-item">
+                              <span class="stat-icon"><i class="fas fa-dollar-sign"></i></span>
+                              <span class="stat-label">Budget</span>
+                              <span class="stat-value">${{ profile.budget|format_number }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                     
                     {% if profile.preferred_majors %}
-                      <p><strong>Interested Majors:</strong> {{ profile.preferred_majors|join(', ') }}</p>
+                      <div class="profile-detail">
+                        <span class="detail-label">Interested Majors</span>
+                        <div class="detail-value">
+                          <div class="tags">
+                            {% for major in profile.preferred_majors %}
+                              <span class="tag is-info is-light">{{ major }}</span>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
                     {% endif %}
                     
                     {% if profile.preferred_locations %}
-                      <p><strong>Preferred Locations:</strong> {{ profile.preferred_locations|join(', ') }}</p>
+                      <div class="profile-detail">
+                        <span class="detail-label">Preferred Locations</span>
+                        <div class="detail-value">
+                          <div class="tags">
+                            {% for location in profile.preferred_locations %}
+                              <span class="tag is-success is-light">{{ location }}</span>
+                            {% endfor %}
+                          </div>
+                        </div>
+                      </div>
                     {% endif %}
                     
-                    <p><strong>Budget:</strong> ${{ profile.budget }}</p>
-                    <p><strong>Campus Preference:</strong> {{ profile.preferred_environment }}</p>
+                    <div class="profile-detail">
+                      <span class="detail-label">Campus Preference</span>
+                      <div class="detail-value">
+                        <span class="tag is-primary is-light">{{ profile.preferred_environment }}</span>
+                      </div>
+                    </div>
+                    
+                    {% if profile.importance_weights %}
+                    <div class="profile-detail">
+                      <span class="detail-label">Factor Importance</span>
+                      <div class="detail-value">
+                        <div class="importance-weights">
+                          {% for factor, weight in profile.importance_weights.items() %}
+                          <div class="weight-item">
+                            <span class="weight-label">{{ factor|title }}</span>
+                            <div class="weight-bar">
+                              <div class="weight-fill" style="width: {{ weight * 100 }}%"></div>
+                            </div>
+                            <span class="weight-value">{{ (weight * 100)|round }}%</span>
+                          </div>
+                          {% endfor %}
+                        </div>
+                      </div>
+                    </div>
+                    {% endif %}
                     
                     <p class="has-text-grey is-size-7">Created: {{ profile.created_at }}</p>
                   </div>
@@ -87,17 +158,31 @@
                 <div class="card-content">
                   <div class="media">
                     <div class="media-left">
-                      <figure class="image is-48x48">
-                        <img src="{{ url_for('static', filename='images/university-icon.png') }}" alt="University icon">
-                      </figure>
+                      <div class="match-score-circle" data-score="{{ rec.match_score * 100 }}">
+                        <span>{{ "%.1f"|format(rec.match_score * 100) }}%</span>
+                      </div>
                     </div>
                     <div class="media-content">
                       <p class="title is-5">{{ rec.university_name }}</p>
-                      <p class="subtitle is-6">Match Score: <strong>{{ "%.1f"|format(rec.match_score * 100) }}%</strong></p>
+                      <p class="subtitle is-6">{{ rec.university_location }}</p>
                     </div>
                   </div>
                   
                   <div class="content">
+                    <div class="university-quick-stats">
+                      <div class="quick-stat">
+                        <span class="stat-label">Academic Rank</span>
+                        <span class="stat-value">#{{ rec.university_rank }}</span>
+                      </div>
+                      <div class="quick-stat">
+                        <span class="stat-label">Tuition</span>
+                        <span class="stat-value">${{ rec.university_tuition|format_number }}</span>
+                      </div>
+                      <div class="quick-stat">
+                        <span class="stat-label">Acceptance</span>
+                        <span class="stat-value">{{ rec.university_acceptance_rate }}%</span>
+                      </div>
+                    </div>
                     <p class="is-size-7">Saved from profile: {{ rec.profile_name }}</p>
                     <p class="is-size-7 has-text-grey">Saved on: {{ rec.created_at }}</p>
                   </div>
@@ -128,6 +213,55 @@
     </div>
   </div>
   
+  <!-- Application Timeline Section -->
+  <div class="box mt-5">
+    <h3 class="title is-4">Application Timeline</h3>
+    <p class="subtitle is-6">Keep track of important dates and deadlines for your applications</p>
+    
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="timeline-marker is-success"></div>
+        <div class="timeline-content">
+          <p class="heading">Today</p>
+          <p>Start researching schools and building your college list</p>
+        </div>
+      </div>
+      
+      <div class="timeline-item">
+        <div class="timeline-marker is-info"></div>
+        <div class="timeline-content">
+          <p class="heading">3 Months Before Deadline</p>
+          <p>Begin drafting application essays and personal statements</p>
+        </div>
+      </div>
+      
+      <div class="timeline-item">
+        <div class="timeline-marker is-warning"></div>
+        <div class="timeline-content">
+          <p class="heading">1 Month Before Deadline</p>
+          <p>Request letters of recommendation and finalize application materials</p>
+        </div>
+      </div>
+      
+      <div class="timeline-item">
+        <div class="timeline-marker is-danger"></div>
+        <div class="timeline-content">
+          <p class="heading">Application Deadline</p>
+          <p>Submit all applications and required materials</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="has-text-centered mt-4">
+      <a href="#" class="button is-info is-light">
+        <span class="icon">
+          <i class="fas fa-calendar-alt"></i>
+        </span>
+        <span>Create Custom Timeline</span>
+      </a>
+    </div>
+  </div>
+  
   <!-- Quick Actions Section -->
   <div class="box mt-5">
     <h3 class="title is-4">Quick Actions</h3>
@@ -144,6 +278,12 @@
         </span>
         <span>Compare Universities</span>
       </a>
+      <a href="{{ url_for('recommendations') }}" class="button is-success">
+        <span class="icon">
+          <i class="fas fa-search"></i>
+        </span>
+        <span>Browse Recommendations</span>
+      </a>
       {% if 'admin' in session.get('roles', []) %}
         <a href="{{ url_for('admin_admission_analytics') }}" class="button is-warning">
           <span class="icon">
@@ -152,12 +292,6 @@
           <span>Admission Analytics</span>
         </a>
       {% endif %}
-      <a href="{{ url_for('logout') }}" class="button is-light">
-        <span class="icon">
-          <i class="fas fa-sign-out-alt"></i>
-        </span>
-        <span>Logout</span>
-      </a>
     </div>
   </div>
 </div>
@@ -165,38 +299,231 @@
 
 {% block extra_css %}
 <style>
-  .card {
-    transition: transform 0.2s, box-shadow 0.2s;
+  /* Profile card styling */
+  .profile-details {
+    display: flex;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
   }
   
-  .card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(10, 10, 10, 0.1);
+  .profile-detail {
+    margin-bottom: 1rem;
+    width: 100%;
   }
   
-  .profiles-list, .recommendations-list {
-    max-height: 600px;
-    overflow-y: auto;
-    padding-right: 10px;
+  .detail-label {
+    display: block;
+    font-weight: 600;
+    color: var(--primary-color);
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
   }
   
-  /* Custom scrollbar for the lists */
-  .profiles-list::-webkit-scrollbar, .recommendations-list::-webkit-scrollbar {
-    width: 8px;
+  .detail-value {
+    display: block;
   }
   
-  .profiles-list::-webkit-scrollbar-track, .recommendations-list::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+  .academic-stats,
+  .financial-stats {
+    display: flex;
+    gap: 1.5rem;
   }
   
-  .profiles-list::-webkit-scrollbar-thumb, .recommendations-list::-webkit-scrollbar-thumb {
-    background: #888;
-    border-radius: 4px;
+  .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
   
-  .profiles-list::-webkit-scrollbar-thumb:hover, .recommendations-list::-webkit-scrollbar-thumb:hover {
-    background: #555;
+  .stat-icon {
+    color: var(--primary-color);
+  }
+  
+  .stat-label {
+    color: var(--light-text);
+    font-size: 0.8rem;
+  }
+  
+  .stat-value {
+    font-weight: 600;
+  }
+  
+  .importance-weights {
+    margin-top: 0.5rem;
+  }
+  
+  .weight-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  
+  .weight-label {
+    flex: 0 0 80px;
+    font-size: 0.8rem;
+  }
+  
+  .weight-bar {
+    flex: 1;
+    height: 6px;
+    background-color: #e9ecef;
+    border-radius: 3px;
+    margin: 0 0.5rem;
+  }
+  
+  .weight-fill {
+    height: 100%;
+    background-color: var(--primary-color);
+    border-radius: 3px;
+  }
+  
+  .weight-value {
+    flex: 0 0 40px;
+    font-size: 0.8rem;
+    text-align: right;
+  }
+  
+  /* Saved universities styling */
+  .match-score-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background-color: #4CAF50;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.8rem;
+  }
+  
+  .match-score-circle[data-score^="9"],
+  .match-score-circle[data-score="100"] {
+    background-color: #4CAF50; /* Green for 90-100% */
+  }
+  
+  .match-score-circle[data-score^="8"] {
+    background-color: #8BC34A; /* Light green for 80-89% */
+  }
+  
+  .match-score-circle[data-score^="7"] {
+    background-color: #2196F3; /* Blue for 70-79% */
+  }
+  
+  .match-score-circle[data-score^="6"],
+  .match-score-circle[data-score^="5"] {
+    background-color: #FF9800; /* Orange for 50-69% */
+  }
+  
+  .match-score-circle[data-score^="4"],
+  .match-score-circle[data-score^="3"],
+  .match-score-circle[data-score^="2"],
+  .match-score-circle[data-score^="1"],
+  .match-score-circle[data-score^="0"] {
+    background-color: #F44336; /* Red for 0-49% */
+  }
+  
+  .university-quick-stats {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    border-top: 1px solid #eee;
+    padding-top: 0.75rem;
+  }
+  
+  .quick-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .quick-stat .stat-label {
+    font-size: 0.7rem;
+    color: #666;
+  }
+  
+  .quick-stat .stat-value {
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  
+  /* Timeline styling */
+  .timeline {
+    margin-top: 2rem;
+    position: relative;
+  }
+  
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 1rem;
+    width: 2px;
+    background-color: #eee;
+  }
+  
+  .timeline-item {
+    display: flex;
+    position: relative;
+    margin-bottom: 2rem;
+  }
+  
+  .timeline-marker {
+    position: absolute;
+    left: 1rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 2px solid white;
+    background-color: var(--primary-color);
+    transform: translateX(-50%);
+  }
+  
+  .timeline-marker.is-success { background-color: #48c774; }
+  .timeline-marker.is-info { background-color: #3298dc; }
+  .timeline-marker.is-warning { background-color: #ffdd57; }
+  .timeline-marker.is-danger { background-color: #f14668; }
+  
+  .timeline-content {
+    padding-left: 2.5rem;
+  }
+  
+  .timeline-content .heading {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+  }
+  
+  @media screen and (min-width: 769px) {
+    .profile-detail {
+      width: 48%;
+    }
   }
 </style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Color the match score circles based on their score
+    const scoreCircles = document.querySelectorAll('.match-score-circle');
+    scoreCircles.forEach(circle => {
+      const scoreText = circle.innerText;
+      const score = parseFloat(scoreText);
+      
+      // Set color based on score
+      if (score >= 90) {
+        circle.style.backgroundColor = '#4CAF50'; // Green
+      } else if (score >= 80) {
+        circle.style.backgroundColor = '#8BC34A'; // Light green
+      } else if (score >= 70) {
+        circle.style.backgroundColor = '#2196F3'; // Blue
+      } else if (score >= 50) {
+        circle.style.backgroundColor = '#FF9800'; // Orange
+      } else {
+        circle.style.backgroundColor = '#F44336'; // Red
+      }
+    });
+  });
+</script>
 {% endblock %} 

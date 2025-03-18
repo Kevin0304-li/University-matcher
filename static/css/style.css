@@ -336,59 +336,191 @@ input:focus, select:focus, textarea:focus {
 }
 
 .university-card {
-    background-color: var(--background-color);
-    border-radius: var(--border-radius);
-    box-shadow: var(--box-shadow);
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     overflow: hidden;
-    transition: var(--transition);
+    margin-bottom: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
 }
 
 .university-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .university-card-header {
-    background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
-    padding: 1.5rem;
-    color: white;
-}
-
-.university-name {
-    font-size: 1.5rem;
-    margin-bottom: 0.5rem;
+    display: flex;
+    padding: 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .match-score {
-    font-size: 1.1rem;
-    font-weight: 500;
+    flex: 0 0 70px;
+    margin-right: 1rem;
 }
 
-.match-score span {
-    font-size: 1.3rem;
-    font-weight: 700;
-}
-
-.university-details {
-    padding: 1.5rem;
-}
-
-.university-detail-item {
-    margin-bottom: 0.75rem;
+.score-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    background-color: #4CAF50;
+    color: white;
     display: flex;
-    justify-content: space-between;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+}
+
+.university-info {
+    flex: 1;
+}
+
+.university-info h3 {
+    margin: 0 0 0.5rem 0;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.university-info p {
+    margin: 0;
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.university-card-details {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.details-row {
+    display: flex;
+    margin-bottom: 0.75rem;
+}
+
+.details-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
 }
 
 .detail-label {
-    font-weight: 500;
-    color: var(--light-text);
+    font-size: 0.8rem;
+    color: #666;
+    margin-bottom: 0.25rem;
 }
 
-.university-card-footer {
-    padding: 1rem 1.5rem;
-    background-color: var(--light-bg);
+.detail-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.component-scores {
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.score-row {
+    margin-bottom: 0.75rem;
+}
+
+.score-row:last-child {
+    margin-bottom: 0;
+}
+
+.component-score {
     display: flex;
+    align-items: center;
+}
+
+.score-label {
+    flex: 0 0 80px;
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.score-bar {
+    flex: 1;
+    height: 8px;
+    background-color: #e0e0e0;
+    border-radius: 4px;
+    overflow: hidden;
+    margin: 0 0.75rem;
+}
+
+.score-fill {
+    height: 100%;
+    background-color: #2196F3;
+    border-radius: 4px;
+}
+
+.score-value {
+    flex: 0 0 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: right;
+    color: #333;
+}
+
+.university-card-actions {
+    display: flex;
+    padding: 1rem 1.25rem;
     justify-content: space-between;
+}
+
+/* Score color variations */
+.score-circle[data-score="excellent"] {
+    background-color: #4CAF50; /* Green for excellent */
+}
+
+.score-circle[data-score="good"] {
+    background-color: #2196F3; /* Blue for good */
+}
+
+.score-circle[data-score="moderate"] {
+    background-color: #FF9800; /* Orange for moderate */
+}
+
+.score-circle[data-score="poor"] {
+    background-color: #F44336; /* Red for poor */
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .university-card-header {
+        flex-direction: column;
+    }
+    
+    .match-score {
+        margin-bottom: 1rem;
+        margin-right: 0;
+        align-self: center;
+    }
+    
+    .university-info {
+        text-align: center;
+    }
+    
+    .details-row {
+        flex-direction: column;
+    }
+    
+    .detail-item {
+        margin-bottom: 0.75rem;
+    }
+    
+    .detail-item:last-child {
+        margin-bottom: 0;
+    }
 }
 
 /* Detail Page */
